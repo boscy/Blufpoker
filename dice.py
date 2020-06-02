@@ -1,5 +1,5 @@
 import random
-
+# not helpful to use
 
 class Die:
     def __init__(self):
