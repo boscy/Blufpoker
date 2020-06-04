@@ -31,18 +31,18 @@ def main():
     print(game.cup.dice)
     # print(len(PossibleWorlds))
     print(PossibleWorlds.index(game.cup.dice))
-
-    # game.cup.roll_all()
+    print_dice(game.cup.dice)
+    game.cup.roll_dice_with_value(6)
+    print_dice(game.cup.dice)
+    game.cup.roll_all()
     # print(game.cup.dice)
     # print(PossibleWorlds.index(game.cup.dice))
 
     # print(PossibleWorlds.index([5, 5, 5]))
     # print(PossibleWorlds.index([6, 6, 6]))
 
-    game.cup.roll_dice_with_value(1)
-    print(game.cup.dice)
-    print(game.p1.knowledge)
-    print_dice(game.cup.dice)
+    # print(game.p1.knowledge)
+    # print_dice(game.cup.dice)
 
 
 if __name__ == '__main__':

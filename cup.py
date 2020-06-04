@@ -8,9 +8,9 @@ class Cup:
         Defines an object Cup in a game of Blufpoker.\n
         :param n_dice: Number of dice the cup is initialized with.
         """
-        self.dice = [3,1,1]
-        # for _ in range(3):
-        #     self.dice.append(random.randint(1, 6))
+        self.dice = []
+        for _ in range(3):
+            self.dice.append(random.randint(1, 6))
 
         self.dice.sort(reverse=True)
 
@@ -27,9 +27,11 @@ class Cup:
     def roll_dice_with_value(self, value):
         if value in self.dice:
             print(f'hand now = {self.dice}')
-            print(f'removing dice with value {self.dice.index(value)}')
+            print(f'rolling dice with value {value}')
             self.dice.remove(value)
-            self.dice.append(random.randint(1, 6))
+            new_roll = random.randint(1, 6)
+            print(f'you rolled: {new_roll}')
+            self.dice.append(new_roll)
             self.dice.sort(reverse=True)
         else:
             print(f"there is no dice of value {value} in the cup")
