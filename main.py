@@ -3,6 +3,25 @@ from player import Player
 from cup import Cup
 
 
+def print_dice(cup):
+    base = '+---------+         +---------+         +---------+'
+    sep = '         '
+    blank = '|         |'
+    left = '| o       |'
+    middle = '|    o    |'
+    right = '|       o |'
+    both = '| o     o |'
+
+    dice = [(blank, middle, blank),
+            (left, blank, right),
+            (left, middle, right),
+            (both, blank, both),
+            (both, middle, both),
+            (both, both, both)]
+    print(base)
+    print('\n'.join(a + sep + b + sep + c for a, b, c in zip(dice[cup[0] - 1], dice[cup[1] - 1], dice[cup[2] - 1])))
+    print(base)
+
 def main():
     game = Game()
 
@@ -23,6 +42,8 @@ def main():
     game.cup.roll_dice_with_value(1)
     print(game.cup.dice)
     print(game.p1.knowledge)
+    print_dice(game.cup.dice)
+
 
 if __name__ == '__main__':
     main()

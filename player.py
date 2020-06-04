@@ -10,6 +10,7 @@ class Player:
         """
         self.knowledge = ['K~p and ~K~Q']
         self.turn = False
+        self.strategy = 'random'
 
 
 

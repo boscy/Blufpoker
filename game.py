@@ -12,6 +12,17 @@ PossibleWorlds = [
 ]
 
 
+states = {  #states that a player runs through
+    'end': 0,
+    'start': 1,
+    'first_turn': 2,
+    'believe/call_bluff_phase': 3,
+    'throw_dice_phase': 4,
+    'bidding_phase': 5
+}
+
+
+
 class Game:
     def __init__(self):
         """
@@ -25,3 +36,7 @@ class Game:
 
         self.cup = Cup()
         self.p1.turn = True
+
+        
+
+
