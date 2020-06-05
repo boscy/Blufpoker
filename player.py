@@ -9,8 +9,11 @@ class Player:
         Turn is initialized as false.
         """
         self.knowledge = ['K~p and ~K~Q']
+        self.bid = []
         self.turn = False
         self.strategy = 'random'
 
+    def set_bid(self, bidnumbers):
+        self.bid = bidnumbers
 
 

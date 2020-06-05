@@ -24,18 +24,19 @@ def print_dice(cup):
 
 def main():
     game = Game()
+    game.play()
 
     # print(game.p1.turn)
     # print(game.p2.turn)
 
-    print(game.cup.dice)
-    # print(len(PossibleWorlds))
-    print(PossibleWorlds.index(game.cup.dice))
-    print_dice(game.cup.dice)
-    game.cup.roll_dice_with_value(6)
-    print_dice(game.cup.dice)
-    game.cup.roll_all()
     # print(game.cup.dice)
+    # # print(len(PossibleWorlds))
+    # print(PossibleWorlds.index(game.cup.dice))
+    # print_dice(game.cup.dice)
+    # game.cup.roll_dice_with_value(6)
+    # print_dice(game.cup.dice)
+    # game.cup.roll_all()
+    # # print(game.cup.dice)
     # print(PossibleWorlds.index(game.cup.dice))
 
     # print(PossibleWorlds.index([5, 5, 5]))
