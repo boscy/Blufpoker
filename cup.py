@@ -26,14 +26,13 @@ class Cup:
 
     def roll_dice_with_value(self, value):
         if value in self.dice:
-            print(f'hand now = {self.dice}')
-            print(f'rolling dice with value {value}')
+            # print(f'hand now = {self.dice}')
             self.dice.remove(value)
             new_roll = random.randint(1, 6)
-            print(f'you rolled: {new_roll}')
+            print(f'Rolled die with value {value} to {new_roll}')
             self.dice.append(new_roll)
             self.dice.sort(reverse=True)
         else:
-            print(f"there is no dice of value {value} in the cup")
+            print(f"there is no die of value {value} in the cup")
 
     # TODO add rolling one or two die, add which dice are visible and not

@@ -25,6 +25,7 @@ def print_dice(cup):
 def main():
     game = Game()
     game.play()
+    # print(len(PossibleWorlds))
 
     # print(game.p1.turn)
     # print(game.p2.turn)

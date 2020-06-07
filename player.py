@@ -11,7 +11,10 @@ class Player:
         self.knowledge = ['K~p and ~K~Q']
         self.bid = []
         self.turn = False
-        self.strategy = 'random'
+        self.determine_bluff_strategy = 'random'
+        self.throw_strategy = 'random'
+        self.bid_strategy = 'truthful'
+        self.penalty_points = 0
 
     def set_bid(self, bidnumbers):
         self.bid = bidnumbers
