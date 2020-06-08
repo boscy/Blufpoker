@@ -12,7 +12,7 @@ class Player:
         self.bid = []
         self.turn = False
         self.determine_bluff_strategy = 'random'
-        self.throw_strategy = 'random'
+        self.roll_strategy = 'random'
         self.bid_strategy = 'truthful'
         self.penalty_points = 0
 

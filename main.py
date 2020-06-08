@@ -23,9 +23,25 @@ def print_dice(cup):
     print(base)
 
 def main():
-    game = Game()
-    game.play()
-    # print(len(PossibleWorlds))
+    new_game = True
+    test_string = ['S', 'M', 'E', 'G', 'M', 'A']
+
+    while new_game:
+        game = Game()
+        game.play()
+
+        another_game = input("Another game? [y/n]")
+        while another_game != 'y' and another_game != 'n':
+            another_game = input("Please try again: Another game? [y/n]")
+
+        if another_game == 'n':
+            new_game = False
+            print('Goodbye!')
+
+        if another_game == 'y':
+            print('Starting new game!')
+            continue
+
 
     # print(game.p1.turn)
     # print(game.p2.turn)
