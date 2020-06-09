@@ -65,7 +65,7 @@ class Game:
         self.cup = Cup()
         self.turn = 0
         self.state = states['start']
-        self.loser_name = ['S', 'M', 'E', 'G', 'M', 'A']
+        self.loser_name = ['S', 'M', 'E', 'G', 'M', 'A'] #TODO make is such that user can set this.
         self.max_penalty = len(self.loser_name)
         self.max_overbid = 3
         self.believe_percentage = 80
