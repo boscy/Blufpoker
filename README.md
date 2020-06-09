@@ -2,7 +2,7 @@ This is the repository for the game 'Blufpoker' for the course Logical Aspects o
 Website at https://boscy.github.io/Blufpoker/
 
 
-<img src="https://i.pinimg.com/originals/f5/95/f6/f595f6e121085652d5118eaf3a20e8e1.jpg" class="img-responsive" alt=""> </div>
+<img src="https://i.pinimg.com/originals/f5/95/f6/f595f6e121085652d5118eaf3a20e8e1.jpg" class="img-responsive" alt=""> 
 
 
 **Analyzing Blufpoker using Epistemic Logic**
