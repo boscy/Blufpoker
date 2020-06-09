@@ -24,7 +24,9 @@ The game is played using three dice, which together depict a number in the hundr
 The original game consist of multiple aspects that will heavily complicate the composition of themodel and therefore the decision making process.  This is why we will apply several simplificationsto make the game more manageable.
 
 -•When a player is not bluffing, he will announce the exact number he reached with the dice. *In  the  original  game,  the  player  can  choose  whichever  number  he  wants  (even  ’impossible’numbers such as 500) as long as his throw is higher than this.•The ”golden triangle” is not the highest throw.In  the  original  game,  the  combination  321  yields  a  ”golden  triangle”  which  is  the  highestpossible throw, beating 666.*
+
 -•All players play to win. *In  the  original  game,  players  can  decide  to  adjust  their  announcements  in  order  complicatespecific  other  player’s  turns,  trying  to  make  them  lose.   In  our  version  the  player  is  onlyconcerned with himself not losing.*
+
 -•The player will never pass the dice without throwing. *In the original game, a player has a third option besides throwing the dice or calling a bluff.Which is announcing a higher number, while not having thrown the dice, and passing them tothe next player.  This does not add to the knowledge base of the player, which is why we willnot implement this part.*
 
 ## 1.3    Outline
@@ -44,17 +46,25 @@ A simulation of Blufpoker is made to quantify the performance of the knowledge-b
 An  overview  of  the  strategies  of  the  naive  agents  that  will  be  used  in  the  games  against  theknowledge-based agent is given:
 
 1.  Which dice will the agent throw?
+
 -•Random
+
 -•Throw the lowest die
+
 -•Throw any die that is lower than 6
 
 2.  When will the agent bluff?
+
 -•Always be truthful, if possible.
+
 -•Always tell a number x above the previous value
 
 3.  When has the previous agent bluffed?
+
 -•Random
+
 -•Always believe it
+
 -•Always call the bluff
 
 ## 2.2    Knowledge-based agent
@@ -78,6 +88,9 @@ The results we will gather are focused whether we will be able to efficiently co
 # 4    Possible Extensions
 
 If time allows for it, we have thought of several directions to take in order to extend our projectand/or it’s implementation.•We want to evaluate different settings with regards to the strategies against which the logicalplayer has to compete, and look at the way its performance changes.
+
 -•When  possible,  we  would  like  to  add  more  players  using  a  logical  model  for  their  decisionmaking process.
+
 -•We would like to add feedback prompts describing the decision making process of the logicalagent, much like the thought process of a human player.
+
 -•More aesthetically, we would like to add visualizations of the dice and or the cup.
