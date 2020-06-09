@@ -1,4 +1,5 @@
-This is the repository for the game 'Blufpoker' for the course Logical Aspects of Multi-Agent Systems
+This is the repository for the game 'Blufpoker' for the course Logical Aspects of Multi-Agent Systems.
+Website at https://boscy.github.io/Blufpoker/
 
 ### 1    Introduction
 
