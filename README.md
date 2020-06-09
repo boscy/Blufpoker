@@ -1,6 +1,8 @@
 This is the repository for the game 'Blufpoker' for the course Logical Aspects of Multi-Agent Systems.
 Website at https://boscy.github.io/Blufpoker/
 
+![alt text](https://i.pinimg.com/originals/f5/95/f6/f595f6e121085652d5118eaf3a20e8e1.jpg)
+
 ### 1    Introduction
 
 Blufpokeris  a  dice  game  which  contains  several  interesting  aspects  with  regards  to  knowledge,beliefs and bluffing.  In this project, we aim to implement (a simplified version of) the game in aprogramming environment, as well as simulating different players and their respective strategies.This will be done using Epistemic Logic combined with a Multi Agent System that models playingbehaviour for three players.  We aim to implement different playing styles,  which will be furtherexplained  in  Section  2.   Furthermore,  we  aim  to  define  and  compose  an  epistemic  model  of  theknowledge for at least one player.  This model will contain the possible worlds which can be reachedfrom the in game situation and will be used for the decision making process of the player.  Theaspect of bluffing (false public announcements) comes into play when a player throws a bad turn.But before we address this, we will describe the rules of the game.
