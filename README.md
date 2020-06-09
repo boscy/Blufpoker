@@ -1,7 +1,13 @@
 This is the repository for the game 'Blufpoker' for the course Logical Aspects of Multi-Agent Systems.
 Website at https://boscy.github.io/Blufpoker/
 
-![alt text](https://i.pinimg.com/originals/f5/95/f6/f595f6e121085652d5118eaf3a20e8e1.jpg)
+
+<img src="https://i.pinimg.com/originals/f5/95/f6/f595f6e121085652d5118eaf3a20e8e1.jpg" class="img-responsive" alt=""> </div>
+
+
+**Analyzing Blufpoker using Epistemic Logic**
+
+Ivar Mak (S2506580)   Oscar de Vries (S2713748)   Joost Warmerdam (S2591367)
 
 # 1    Introduction
 
@@ -11,13 +17,15 @@ Blufpokeris  a  dice  game  which  contains  several  interesting  aspects  with
 
 The game is played using three dice, which together depict a number in the hundreds.  The highestranking die translates to the hundred, the second to the ten, and the lowest ranking die translatesto the single digit.  So in a situation where a 5, 3, and 2 are rolled the corresponding number is 532.The exception are the ”pokers” which are triplets (i.e.  111, 222, 333, etc).  These are the highestpossible throws, 111 is higher than 665, and 666 is poker 6 and the highest possible score.  Table 1 describes all possible combinations, ranked descending from highest to lowest.  Players take turnsthrowing the dice, which are concealed under a cup (i.e.  other players do not see the player’s dice).The aim of the game is to throw a number that is higher that the number that was passed on bythe previous player.  Each dice can be thrown once in order to try to reach a higher number.  Whenthe player completes his turn,  he needs to publicly announce the number that he reached whichneeds to be higher than the number that was passed on to him (unless he is starting the round, inthis case any number suffices).  Obviously, there is a possibility that he did not reach a number thatis high enough.  In this case the player needs to bluff, by saying a number that he did not throw.Since the dice are concealed, he can say whatever number he deems suitable, and pass on the diceto the next player.  It is up to this player to determine whether his adversary is telling the truth.If he believes the truth was told, it is his turn to throw the dice and reach a higher number yetagain.  In the case he does not believe the previous player, he can call the bluff and lift the cup.  Ifthe number that was announced is actually on the table player 2 loses the round, if the number isnot there; player 1 loses the round.  Note that not all dice have to be thrown in order for a playerto pass the dice, a player can stop and announce his number after each throw.  Furthermore thenumber of rounds to be played is variable, with a player obtaining one penalty point for each roundlost, and the game ending when a specific number of points is reached.  Therefore there will alwaysbe one loser and multiple winners.  The number of penalty points chosen to finish can resemble aword such as ”HORSE”, receiving a letter for each loss.
 
+<img src="images/PossibleWorlds.png" class="img-responsive" alt=""> </div>
+
 ## 1.2    Simplifications
 
 The original game consist of multiple aspects that will heavily complicate the composition of themodel and therefore the decision making process.  This is why we will apply several simplificationsto make the game more manageable.
 
--•When a player is not bluffing, he will announce the exact number he reached with the dice.In  the  original  game,  the  player  can  choose  whichever  number  he  wants  (even  ’impossible’numbers such as 500) as long as his throw is higher than this.•The ”golden triangle” is not the highest throw.In  the  original  game,  the  combination  321  yields  a  ”golden  triangle”  which  is  the  highestpossible throw, beating 666.
--•All players play to win.In  the  original  game,  players  can  decide  to  adjust  their  announcements  in  order  complicatespecific  other  player’s  turns,  trying  to  make  them  lose.   In  our  version  the  player  is  onlyconcerned with himself not losing.
--•The player will never pass the dice without throwing.In the original game, a player has a third option besides throwing the dice or calling a bluff.Which is announcing a higher number, while not having thrown the dice, and passing them tothe next player.  This does not add to the knowledge base of the player, which is why we willnot implement this part.
+-•When a player is not bluffing, he will announce the exact number he reached with the dice. *In  the  original  game,  the  player  can  choose  whichever  number  he  wants  (even  ’impossible’numbers such as 500) as long as his throw is higher than this.•The ”golden triangle” is not the highest throw.In  the  original  game,  the  combination  321  yields  a  ”golden  triangle”  which  is  the  highestpossible throw, beating 666.*
+-•All players play to win. *In  the  original  game,  players  can  decide  to  adjust  their  announcements  in  order  complicatespecific  other  player’s  turns,  trying  to  make  them  lose.   In  our  version  the  player  is  onlyconcerned with himself not losing.*
+-•The player will never pass the dice without throwing. *In the original game, a player has a third option besides throwing the dice or calling a bluff.Which is announcing a higher number, while not having thrown the dice, and passing them tothe next player.  This does not add to the knowledge base of the player, which is why we willnot implement this part.*
 
 ## 1.3    Outline
 
