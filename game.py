@@ -70,7 +70,7 @@ class Game:
         self.max_overbid = 3
         self.believe_percentage = 80
 
-        self.press_to_continue = False
+        self.press_to_continue = True
 
         # Agent strategies, TODO set all parameters from a config file
         self.players[0].roll_strategy = '1_lowest'
