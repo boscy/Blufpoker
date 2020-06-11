@@ -77,7 +77,7 @@ class Game:
         self.players[1].roll_strategy = 'greedy'
         self.players[2].roll_strategy = 'random_lowest'
 
-        self.players[2].bid_strategy = 'always_higher'
+        self.players[2].bid_strategy = 'always_overbid'
 
     def update_turn(self):  # sets turn to the next player
         self.turn = (self.turn + 1) % self.n_players
