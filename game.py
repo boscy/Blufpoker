@@ -237,8 +237,6 @@ class Game:
                     self.current_bid = random_bid_return()  # random bid
 
                 print(f"[STARTING BID] Player {self.turn} bids: {self.current_bid}")
-
-
                 if self.press_to_continue:
                     input("Press Enter to continue...\n")
                 self.update_turn()
