@@ -66,12 +66,12 @@ class Game:
         self.cup = Cup()
         self.turn = 0
         self.state = states['start']
-        self.loser_name = ['S', 'M', 'E', 'G', 'M', 'A'] #TODO make is such that user can set this.
+        self.loser_name = ['S', 'M', 'E', 'G', 'M', 'A']  # TODO make is such that user can set this.
         self.max_penalty = len(self.loser_name)
         self.max_overbid = 3
         self.believe_percentage = 80
 
-        self.press_to_continue = False
+        self.press_to_continue = True
 
         # Agent strategies, TODO set all parameters from a config file
         self.players[0].roll_strategy = '1_lowest'
@@ -102,46 +102,56 @@ class Game:
 
     def roll_dice(self, roll_strategy):
         # dice are always ordered, so ranked from highest to lowest
-        dice1 = self.cup.dice[0]
-        dice2 = self.cup.dice[1]
-        dice3 = self.cup.dice[2]
-
         # maintain which dice are thrown, such that we can know what can be set as public knowledge
-        dice1_thrown = False
-        dice2_thrown = False
-        dice3_thrown = False
+        # dicecopy = [copy(self.cup.dice), np.zeros(3, dtype=int)]  # make a copy of the dice and whether they are thrown
+        dicecopy = [copy(self.cup.dice), [0, 0, 0]]  # make a copy of the dice and whether they are thrown
 
         # roll according to strategies 'random', '1_lowest', 'random_lowest' or 'greedy'
         if roll_strategy == 'random':
             print('[ROLL] Rolling random die')
             randomDie = random.randint(0, 2)
-            dieValue = self.cup.dice[randomDie]
-
-            self.cup.roll_dice_with_value(self.cup.dice[randomDie])
-
+            self.cup.roll_dice_with_value(dicecopy[0][randomDie])
+            dicecopy[1][randomDie] = 1
 
         elif roll_strategy == '1_lowest':
             print('[ROLL] Rolling 1 lowest die ')
-            self.cup.roll_dice_with_value(dice3)  # rerolls the lowest die
+            self.cup.roll_dice_with_value(dicecopy[0][2])  # rerolls the lowest die
+            dicecopy[1][2] = 1
 
         elif roll_strategy == 'random_lowest':
             print('[ROLL] Rolling random n lowest dice')
             random_n = random.randint(0, 2)
-            self.cup.roll_dice_with_value(dice3)
+            self.cup.roll_dice_with_value(dicecopy[0][2])
+            dicecopy[1][2] = 1
             if random_n > 0:  # must be done dice by dice since reshuffle disallows a loop
-                self.cup.roll_dice_with_value(dice2)
+                self.cup.roll_dice_with_value(dicecopy[0][1])
+                dicecopy[1][1] = 1
             if random_n > 1:
-                self.cup.roll_dice_with_value(dice1)
+                self.cup.roll_dice_with_value(dicecopy[0][0])
+                dicecopy[1][0] = 1
 
         elif roll_strategy == 'greedy':  # rolls all dice that aren't 6's
             print('[ROLL] Rolling greedy (all non-6 dice)')
-            if dice1 != 6:
-                self.cup.roll_dice_with_value(dice1)
-            if dice2 != 6:
-                self.cup.roll_dice_with_value(dice2)
-            if dice3 != 6:
-                self.cup.roll_dice_with_value(dice3)
+            print(dicecopy)
+            if dicecopy[0][0] != 6:
+                self.cup.roll_dice_with_value(dicecopy[0][0])
+                dicecopy[1][0] = 1
+            if dicecopy[0][1] != 6:
+                self.cup.roll_dice_with_value(dicecopy[0][1])
+                dicecopy[1][1] = 1
+            if dicecopy[0][2] != 6:
+                self.cup.roll_dice_with_value(dicecopy[0][2])
+                dicecopy[1][2] = 1
 
+        print(dicecopy)
+        self.public_knowledge = []
+        for i in range(2):
+            if dicecopy[1][i] == 0:
+                value = dicecopy[0][i]
+                print(f'value = {value}')
+                self.public_knowledge.append(value)
+
+        print(f'Open dices are: {self.public_knowledge}')
         # TODO implement rolling for pokers
 
     def bidding(self, strategy):
@@ -160,7 +170,7 @@ class Game:
                         PossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
 
                 else:  # maximum bid is reached
-                    #TODO implement bidding for pokers
+                    # TODO implement bidding for pokers
                     print('WTF do we do now')
 
         elif strategy == 'always_overbid':
@@ -200,7 +210,7 @@ class Game:
 
                 if self.players[self.turn].bid_strategy == 'truthful':
                     self.current_bid = copy(self.cup.dice)
-                elif self.players[self.turn].bid_strategy == 'random':
+                else:
                     self.current_bid = random_bid_return()  # random bid
 
                 print(f"[STARTING BID] Player {self.turn} bids: {self.current_bid}")
