@@ -21,9 +21,14 @@ states = {  # states that a player runs through
     'believe/call_bluff_phase': 2,
     'roll_dice_phase': 3,
     'bidding_phase': 4,
-    'penalty_phase': 5
+    'penalty_phase': 5,
+    'poker_phase': 6
 }
 
+def is_poker(bid):
+    if(bid[0] == bid[1] and bid[1] == bid[2]):
+        return True
+    else: return False
 
 def random_bid_return():
     i = []
@@ -196,8 +201,6 @@ class Game:
             print(f'Player {self.turn} was wrong and gets one penalty point')
             # turn remains with this player
 
-    def update_knowledge(self):
-
     # Main loop that plays the game
     def play(self):
         end_game = False
@@ -247,9 +250,20 @@ class Game:
                         input("Press Enter to continue...\n")
                 self.state = states['start']
                 continue
-
+            
+            if self.state == states['poker_phase']:
+                # wanneer een poker wordt gegooid & geloofd (phase/state van maken)
+	            # -> ga naar aparte functie voor een poker
+	            # -> alles is nu open
+	            # -> er mag 3x gegooid worden
+	            # -> 
+	
+                # welke poker ga ik voor? 
+                #     antwoord: de hoogste laat ik liggen
+                #         tenzij er 2 van een aantal liggen -> dan neem ik die (elke keer checken na gooien want
             # ------------- These states are looped within one round --------------
-
+                continue
+            
             if self.state == states['believe/call_bluff_phase']:
                 print(f'[TURN] of Player {self.turn}')
                 if self.determine_bluff(
@@ -260,7 +274,10 @@ class Game:
                 else:
                     print(
                         f'Player {self.turn} believes Player {(self.turn + self.n_players - 1) % self.n_players} (i.e. that at least {self.current_bid} is  under the cup)')
-                    self.state = states['roll_dice_phase']
+                    if(is_poker(self.current_bid)):
+                        self.state = states['poker_phase']
+                    else:
+                        self.state = states['roll_dice_phase']
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 continue
