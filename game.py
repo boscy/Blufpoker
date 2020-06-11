@@ -1,4 +1,3 @@
-from dice import Die
 from player import Player
 from cup import Cup
 from copy import copy
