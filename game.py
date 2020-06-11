@@ -64,7 +64,7 @@ class Game:
         """
         Main function for initializing the game
         """
-        self.players = [Player() for i in range(n_players)]
+        self.players = [Player() for _ in range(n_players)]
         self.current_bid = []
         self.public_knowledge = []
         self.n_players = n_players
@@ -136,7 +136,6 @@ class Game:
 
         elif roll_strategy == 'greedy':  # rolls all dice that aren't 6's
             print('[ROLL] Rolling greedy (all non-6 dice)')
-            print(dicecopy)
             if dicecopy[0][0] != 6:
                 self.cup.roll_dice_with_value(dicecopy[0][0])
                 dicecopy[1][0] = 1
@@ -202,7 +201,7 @@ class Game:
             # turn remains with this player
 
     def update_knowledge(self):
-        print(f'Open dices are: {self.public_knowledge}')
+        print(f'Open dice are: {self.public_knowledge}')
         for i in range(self.n_players):
             if i == self.turn:
                 self.players[i].knowledge = [self.cup.dice]
@@ -219,9 +218,10 @@ class Game:
                     else:
                         self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
 
-            print(f'Player {i} knowledge:')
-            print(self.players[i].knowledge)
-            print(f'Number of possible worlds: {len(self.players[i].knowledge)}')
+            print(f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
+            # print(self.players[i].knowledge)
+            higher_possible = [w for w in self.players[i].knowledge if AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
+            print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
 
 
     # Main loop that plays the game
@@ -271,6 +271,7 @@ class Game:
                 continue
             
             if self.state == states['poker_phase']:
+                self.state = states['roll_dice_phase'] #for continuing while this function has to be written
                 # wanneer een poker wordt gegooid & geloofd (phase/state van maken)
 	            # -> ga naar aparte functie voor een poker
 	            # -> alles is nu open
@@ -280,6 +281,7 @@ class Game:
                 # welke poker ga ik voor? 
                 #     antwoord: de hoogste laat ik liggen
                 #         tenzij er 2 van een aantal liggen -> dan neem ik die (elke keer checken na gooien want
+
             # ------------- These states are looped within one round --------------
                 continue
             
@@ -294,7 +296,8 @@ class Game:
                     print(
                         f'Player {self.turn} believes Player {(self.turn + self.n_players - 1) % self.n_players} (i.e. that at least {self.current_bid} is  under the cup)')
                     self.players[self.turn].knowledge = self.cup.dice
-                    if(is_poker(self.current_bid)):
+
+                    if is_poker(self.current_bid):
                         self.state = states['poker_phase']
                     else:
                         self.state = states['roll_dice_phase']
