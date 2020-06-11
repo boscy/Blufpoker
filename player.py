@@ -8,7 +8,7 @@ class Player:
         Defines an object Player in a game of Blufpoker.\n
         Turn is initialized as false.
         """
-        self.knowledge = ['K~p and ~K~Q']
+        self.knowledge = []
         self.bid = []
         self.turn = False
         self.determine_bluff_strategy = 'random'
