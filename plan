@@ -1,0 +1,16 @@
+## GAME MECHANICS ##
+- Include having dice 'open' and 'closed'
+- Whichever die is not thrown must be open
+- Calculate probabilities in terms of likelihood of throwing dice
+- When deciding to call a bluff or believe, determine the chance how likely
+
+
+## LOGIC ##
+- Make Kripke model:
+   - Update after every dice throw and
+   - when an agent sees the cup
+- Kripke model in terms of States, valuations and relations
+
+
+## RESULTS & CONCLUSION &&
+- Performance of (knowledge) agent strategies amongst others
