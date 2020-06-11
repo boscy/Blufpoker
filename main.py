@@ -25,7 +25,15 @@ def print_dice(cup):
 def main():
     new_game = True
     test_string = ['S', 'M', 'E', 'G', 'M', 'A']
-
+    # public_knowledge = [6,6]
+    # a = public_knowledge[0]
+    # print(a)
+    # print([s for s in AllPossibleWorlds if public_knowledge in s])
+    # print(AllPossibleWorlds[j] for j in AllPossibleWorlds if 6 in AllPossibleWorlds)
+    # pk1, pk2 = public_knowledge
+    # print([s for s in AllPossibleWorlds if (pk1 in s and pk2 in s)])
+    # print([s for s in AllPossibleWorlds if public_knowledge in s])
+    # print(list(s for s in AllPossibleWorlds if s.count(pk1) >= 2))
     while new_game:
         game = Game()
         game.play()

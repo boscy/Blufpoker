@@ -108,7 +108,6 @@ class Game:
     def roll_dice(self, roll_strategy):
         # dice are always ordered, so ranked from highest to lowest
         # maintain which dice are thrown, such that we can know what can be set as public knowledge
-        # dicecopy = [copy(self.cup.dice), np.zeros(3, dtype=int)]  # make a copy of the dice and whether they are thrown
         dicecopy = [copy(self.cup.dice), [0, 0, 0]]  # make a copy of the dice and whether they are thrown
 
         # roll according to strategies 'random', '1_lowest', 'random_lowest' or 'greedy'
@@ -148,7 +147,7 @@ class Game:
                 self.cup.roll_dice_with_value(dicecopy[0][2])
                 dicecopy[1][2] = 1
 
-        print(dicecopy)
+        # print(dicecopy)
         self.public_knowledge = []
         for i in range(2):
             if dicecopy[1][i] == 0:
@@ -156,7 +155,7 @@ class Game:
                 # print(f'value = {value}')
                 self.public_knowledge.append(value)
 
-        print(f'Open dices are: {self.public_knowledge}')
+
         # TODO implement rolling for pokers
 
     def bidding(self, strategy):
@@ -168,7 +167,8 @@ class Game:
                 random_add = random.randint(1, self.max_overbid)
                 if (AllPossibleWorlds.index(self.current_bid) + random_add) < 56:
                     self.current_bid = AllPossibleWorlds[
-                        AllPossibleWorlds.index(self.current_bid) + random_add]  # bid slightly higher than previous player
+                        AllPossibleWorlds.index(
+                            self.current_bid) + random_add]  # bid slightly higher than previous player
 
                 elif (AllPossibleWorlds.index(self.current_bid) + 1) < 56:
                     self.current_bid = AllPossibleWorlds[
@@ -201,6 +201,29 @@ class Game:
             print(f'Player {self.turn} was wrong and gets one penalty point')
             # turn remains with this player
 
+    def update_knowledge(self):
+        print(f'Open dices are: {self.public_knowledge}')
+        for i in range(self.n_players):
+            if i == self.turn:
+                self.players[i].knowledge = [self.cup.dice]
+            else:
+                if len(self.public_knowledge) == 0:  # no visible dice means all are unknown
+                    self.players[i].knowledge = AllPossibleWorlds
+                elif len(self.public_knowledge) == 1:  # one dice visible
+                    pk1 = self.public_knowledge[0]
+                    self.players[i].knowledge = [s for s in AllPossibleWorlds if pk1 in s]
+                elif len(self.public_knowledge) == 2:  # two dice visible
+                    pk1, pk2 = self.public_knowledge
+                    if pk1 != pk2:
+                        self.players[i].knowledge = [s for s in AllPossibleWorlds if (pk1 in s and pk2 in s)]
+                    else:
+                        self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
+
+            print(f'Player {i} knowledge:')
+            print(self.players[i].knowledge)
+            print(f'Number of possible worlds: {len(self.players[i].knowledge)}')
+
+
     # Main loop that plays the game
     def play(self):
         end_game = False
@@ -219,10 +242,6 @@ class Game:
                     self.current_bid = random_bid_return()  # random bid
 
                 print(f"[STARTING BID] Player {self.turn} bids: {self.current_bid}")
-
-                # bid = random_bid_return()
-                # if self.bid_possible(bid):
-                #     self.current_bid = bid
                 if self.press_to_continue:
                     input("Press Enter to continue...\n")
                 self.update_turn()
@@ -274,6 +293,7 @@ class Game:
                 else:
                     print(
                         f'Player {self.turn} believes Player {(self.turn + self.n_players - 1) % self.n_players} (i.e. that at least {self.current_bid} is  under the cup)')
+                    self.players[self.turn].knowledge = self.cup.dice
                     if(is_poker(self.current_bid)):
                         self.state = states['poker_phase']
                     else:
@@ -286,6 +306,7 @@ class Game:
                 self.roll_dice(self.players[self.turn].roll_strategy)
                 print(f'Player {self.turn} has rolled the dice, the cup is now as follows:')
                 print_dice(self.cup.dice)
+                self.update_knowledge()
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.state = states['bidding_phase']
