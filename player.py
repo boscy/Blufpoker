@@ -1,5 +1,5 @@
 import random
-from dice import Die
+
 
 
 class Player:

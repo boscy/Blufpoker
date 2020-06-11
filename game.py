@@ -2,6 +2,7 @@ from player import Player
 from cup import Cup
 from copy import copy
 import random
+import numpy as np
 
 PossibleWorlds = [  # ordered from low to high
     [2, 1, 1], [2, 2, 1],
@@ -60,6 +61,7 @@ class Game:
         """
         self.players = [Player() for i in range(n_players)]
         self.current_bid = []
+        self.public_knowledge = []
         self.n_players = n_players
         self.cup = Cup()
         self.turn = 0
@@ -104,10 +106,19 @@ class Game:
         dice2 = self.cup.dice[1]
         dice3 = self.cup.dice[2]
 
+        # maintain which dice are thrown, such that we can know what can be set as public knowledge
+        dice1_thrown = False
+        dice2_thrown = False
+        dice3_thrown = False
+
         # roll according to strategies 'random', '1_lowest', 'random_lowest' or 'greedy'
         if roll_strategy == 'random':
             print('[ROLL] Rolling random die')
-            self.cup.roll_dice_with_value(self.cup.dice[random.randint(0, 2)])
+            randomDie = random.randint(0, 2)
+            dieValue = self.cup.dice[randomDie]
+
+            self.cup.roll_dice_with_value(self.cup.dice[randomDie])
+
 
         elif roll_strategy == '1_lowest':
             print('[ROLL] Rolling 1 lowest die ')

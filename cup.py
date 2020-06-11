@@ -1,7 +1,5 @@
 import random
 
-
-
 class Cup:
     def __init__(self):
         """

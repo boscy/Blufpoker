@@ -42,7 +42,6 @@ def main():
             print('Starting new game!')
             continue
 
-
     # print(game.p1.turn)
     # print(game.p2.turn)
 
