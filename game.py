@@ -4,7 +4,7 @@ from copy import copy
 import random
 import numpy as np
 
-PossibleWorlds = [  # ordered from low to high
+AllPossibleWorlds = [  # ordered from low to high
     [2, 1, 1], [2, 2, 1],
     [3, 1, 1], [3, 2, 1], [3, 2, 2], [3, 3, 1], [3, 3, 2],
     [4, 1, 1], [4, 2, 1], [4, 2, 2], [4, 3, 1], [4, 3, 2], [4, 3, 3], [4, 4, 1], [4, 4, 2], [4, 4, 3],
@@ -84,7 +84,7 @@ class Game:
         self.turn = (self.turn + 1) % self.n_players
 
     def bid_possible(self, bid, strategy):
-        if PossibleWorlds.index(self.current_bid) < PossibleWorlds.index(bid):
+        if AllPossibleWorlds.index(self.current_bid) < AllPossibleWorlds.index(bid):
             print(f'{strategy} bid is possible, {bid} higher than {self.current_bid}')
             # self.print_dice(bid)
             return True
@@ -95,7 +95,7 @@ class Game:
     def determine_bluff(self, strategy):
         if strategy == 'random':
             if random.randint(1, 100) > self.believe_percentage or (  # believing probability
-                    PossibleWorlds.index(self.current_bid) == len(PossibleWorlds) - 1):
+                    AllPossibleWorlds.index(self.current_bid) == len(AllPossibleWorlds) - 1):
                 return True
             else:
                 return False
@@ -148,7 +148,7 @@ class Game:
         for i in range(2):
             if dicecopy[1][i] == 0:
                 value = dicecopy[0][i]
-                print(f'value = {value}')
+                # print(f'value = {value}')
                 self.public_knowledge.append(value)
 
         print(f'Open dices are: {self.public_knowledge}')
@@ -161,13 +161,13 @@ class Game:
                 # print('[DEBUG] copy the values')
             else:
                 random_add = random.randint(1, self.max_overbid)
-                if (PossibleWorlds.index(self.current_bid) + random_add) < 56:
-                    self.current_bid = PossibleWorlds[
-                        PossibleWorlds.index(self.current_bid) + random_add]  # bid slightly higher than previous player
+                if (AllPossibleWorlds.index(self.current_bid) + random_add) < 56:
+                    self.current_bid = AllPossibleWorlds[
+                        AllPossibleWorlds.index(self.current_bid) + random_add]  # bid slightly higher than previous player
 
-                elif (PossibleWorlds.index(self.current_bid) + 1) < 56:
-                    self.current_bid = PossibleWorlds[
-                        PossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
+                elif (AllPossibleWorlds.index(self.current_bid) + 1) < 56:
+                    self.current_bid = AllPossibleWorlds[
+                        AllPossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
 
                 else:  # maximum bid is reached
                     # TODO implement bidding for pokers
@@ -175,17 +175,17 @@ class Game:
 
         elif strategy == 'always_overbid':
             random_add = random.randint(1, self.max_overbid)
-            if (PossibleWorlds.index(self.current_bid) + random_add) < 56:
-                self.current_bid = PossibleWorlds[
-                    PossibleWorlds.index(self.current_bid) + random_add]  # bid slightly higher than previous player
+            if (AllPossibleWorlds.index(self.current_bid) + random_add) < 56:
+                self.current_bid = AllPossibleWorlds[
+                    AllPossibleWorlds.index(self.current_bid) + random_add]  # bid slightly higher than previous player
 
-            elif (PossibleWorlds.index(self.current_bid) + 1) < 56:
-                self.current_bid = PossibleWorlds[
-                    PossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
+            elif (AllPossibleWorlds.index(self.current_bid) + 1) < 56:
+                self.current_bid = AllPossibleWorlds[
+                    AllPossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
 
     def penalise(self):
         print(f'[PENALISE] The bid was {self.current_bid} and the cup has {self.cup.dice}')
-        if PossibleWorlds.index(self.current_bid) > PossibleWorlds.index(
+        if AllPossibleWorlds.index(self.current_bid) > AllPossibleWorlds.index(
                 self.cup.dice):  # the bid was higher than the cup, previous player was bluffing/lying
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
             print(
@@ -195,6 +195,8 @@ class Game:
             self.players[self.turn].penalty_points += 1
             print(f'Player {self.turn} was wrong and gets one penalty point')
             # turn remains with this player
+
+    def update_knowledge(self):
 
     # Main loop that plays the game
     def play(self):

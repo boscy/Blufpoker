@@ -1,4 +1,4 @@
-from game import Game, PossibleWorlds
+from game import Game, AllPossibleWorlds
 from player import Player
 from cup import Cup
 
