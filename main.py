@@ -24,13 +24,19 @@ def print_dice(cup):
 
 
 def main():
-    new_game = False
+    new_game = True
     test_string = ['S', 'M', 'E', 'G', 'M', 'A']
     public_knowledge = [6, 4]
     # a = public_knowledge[0]
     # print(a)
     # print([s for s in AllPossibleWorlds if public_knowledge in s])
     # print(AllPossibleWorlds[j] for j in AllPossibleWorlds if 6 in AllPossibleWorlds)
+    current_bid = [6,4,1]
+    # higher_possible = [w for w in self.players[self.turn].knowledge if
+    #                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
+    # print(len(higher_possible) / len(self.players[self.turn].knowledge))
+
+
     pk1, pk2 = public_knowledge
 
     '''
@@ -47,6 +53,7 @@ def main():
     worlds = [s for s in AllPossibleWorlds if 1 in s and 5 in s and (6 in s or 4 in s)]
 
     print(f'# worlds : {len(worlds)}: {worlds}')
+
     # print([s for s in AllPossibleWorlds if public_knowledge in s])
     # print(list(s for s in AllPossibleWorlds if s.count(pk1) >= 2))
     while new_game:
@@ -65,24 +72,6 @@ def main():
             print('Starting new game!')
             continue
 
-    # print(game.p1.turn)
-    # print(game.p2.turn)
-
-    # print(game.cup.dice)
-    # # print(len(PossibleWorlds))
-    # print(PossibleWorlds.index(game.cup.dice))
-    # print_dice(game.cup.dice)
-    # game.cup.roll_dice_with_value(6)
-    # print_dice(game.cup.dice)
-    # game.cup.roll_all()
-    # # print(game.cup.dice)
-    # print(PossibleWorlds.index(game.cup.dice))
-
-    # print(PossibleWorlds.index([5, 5, 5]))
-    # print(PossibleWorlds.index([6, 6, 6]))
-
-    # print(game.p1.knowledge)
-    # print_dice(game.cup.dice)
 
 
 if __name__ == '__main__':

@@ -25,10 +25,13 @@ states = {  # states that a player runs through
     'poker_phase': 6
 }
 
+
 def is_poker(bid):
-    if(bid[0] == bid[1] and bid[1] == bid[2]):
+    if bid[0] == bid[1] and bid[1] == bid[2]:
         return True
-    else: return False
+    else:
+        return False
+
 
 def random_bid_return():
     i = []
@@ -79,22 +82,31 @@ class Game:
         self.press_to_continue = True
 
         # Agent strategies, TODO set all parameters from a config file
-        self.players[0].roll_strategy = '1_lowest'
-        self.players[1].roll_strategy = 'greedy'
-        self.players[2].roll_strategy = 'random_lowest'
 
-        self.players[2].bid_strategy = 'always_overbid'
+
+
+        self.players[0].roll_strategy = '1_lowest'
+        self.players[0].bid_strategy = 'knowledge_based'
+        self.players[0].determine_bluff_strategy = 'knowledge_based'
+
+        self.players[1].roll_strategy = 'greedy'
+        self.players[1].bid_strategy = 'knowledge_based'
+        self.players[1].determine_bluff_strategy = 'knowledge_based'
+
+        self.players[2].roll_strategy = 'random_lowest'
+        self.players[2].bid_strategy = 'knowledge_based'
+        self.players[2].determine_bluff_strategy = 'knowledge_based'
 
     def update_turn(self):  # sets turn to the next player
         self.turn = (self.turn + 1) % self.n_players
 
     def bid_possible(self, bid, strategy):
         if AllPossibleWorlds.index(self.current_bid) < AllPossibleWorlds.index(bid):
-            print(f'{strategy} bid is possible, {bid} higher than {self.current_bid}')
+            print(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
             # self.print_dice(bid)
             return True
         else:
-            print(f'{strategy} bid is impossible, {bid} not higher than {self.current_bid}')
+            print(f'Truthful bid is impossible, {bid} not higher than {self.current_bid}')
             return False
 
     def determine_bluff(self, strategy):
@@ -105,10 +117,35 @@ class Game:
             else:
                 return False
 
+        elif strategy == 'always_true':
+            return True
+
+        elif strategy == 'always_false':
+            return False
+
+        elif strategy == 'knowledge_based':
+            if self.current_bid not in self.players[self.turn].knowledge:
+                return True
+            else:
+                # TODO: determine values correctly, such that chances take into account that certain bids are less likely than others
+                believe_threshold = 1/6 + random.uniform((-1/12), (1/12))
+                higher_possible = [w for w in self.players[self.turn].knowledge if
+                                   self.players[self.turn].knowledge.index(w) >= self.players[self.turn].knowledge.index(self.current_bid)]
+                print(f'percentage of possible higher worlds among possible worlds: {len(higher_possible) / len(self.players[self.turn].knowledge)}')
+                if len(higher_possible) / len(self.players[self.turn].knowledge) >= believe_threshold:
+                    print(f' {len(higher_possible) / len(self.players[self.turn].knowledge)} >= {believe_threshold}')
+                    return False # not a bluff -> believe
+                else:
+                    print(f' {len(higher_possible) / len(self.players[self.turn].knowledge)} < {believe_threshold}')
+                    return True
+
+
+
     def roll_dice(self, roll_strategy):
+
         # dice are always ordered, so ranked from highest to lowest
-        # maintain which dice are thrown, such that we can know what can be set as public knowledge
-        dicecopy = [copy(self.cup.dice), [0, 0, 0]]  # make a copy of the dice and whether they are thrown
+        # maintain which dice are rolled, such that we can know what can be set as public knowledge
+        dicecopy = [copy(self.cup.dice), [0, 0, 0]]  # make a copy of the dice and whether they are rolled
 
         # roll according to strategies 'random', '1_lowest', 'random_lowest' or 'greedy'
         if roll_strategy == 'random':
@@ -154,6 +191,7 @@ class Game:
                 # print(f'value = {value}')
                 self.public_knowledge.append(value)
 
+        # TODO add knowledge based rolling, i.e: roll again if you have not reached the desired outcome
 
         # TODO implement rolling for pokers
 
@@ -187,6 +225,36 @@ class Game:
                 self.current_bid = AllPossibleWorlds[
                     AllPossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
 
+        elif strategy == 'knowledge_based':
+            # The knowledge agent bids truthfully given that it rolled high enough or bluffs giving the most believable lie with a high enough value.
+            if self.bid_possible(self.cup.dice, strategy):  # bid truthful if possible
+                self.current_bid = copy(self.cup.dice)
+            else:  # truthful bet impossible, look for a smart bluff
+
+                # determine the possible bets for the next player (now implemented for all players), when bluffing
+                if len(self.public_knowledge) == 0:  # no visible dice means all are unknown
+                    possible_bets = AllPossibleWorlds
+                elif len(self.public_knowledge) == 1:  # one dice visible
+                    pk1 = self.public_knowledge[0]
+                    possible_bets = [s for s in AllPossibleWorlds if pk1 in s]
+                else:  # two dice visible
+                    pk1, pk2 = self.public_knowledge
+                    if pk1 != pk2:
+                        possible_bets = [s for s in AllPossibleWorlds if (pk1 in s and pk2 in s)]
+                    else:
+                        possible_bets = list(s for s in AllPossibleWorlds if s.count(
+                            pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
+
+                higher_possible = [w for w in possible_bets if
+                                   AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
+                print(f'possible bluffs:{higher_possible}')
+                if len(higher_possible) != 0:  # there is at least one higher possible world for bluffing
+                    self.current_bid = higher_possible[0]
+                else:  # there is no possible bluff
+                    if (AllPossibleWorlds.index(self.current_bid) + 1) < 56:
+                        self.current_bid = AllPossibleWorlds[
+                            AllPossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
+
     def penalise(self):
         print(f'[PENALISE] The bid was {self.current_bid} and the cup has {self.cup.dice}')
         if AllPossibleWorlds.index(self.current_bid) > AllPossibleWorlds.index(
@@ -216,13 +284,16 @@ class Game:
                     if pk1 != pk2:
                         self.players[i].knowledge = [s for s in AllPossibleWorlds if (pk1 in s and pk2 in s)]
                     else:
-                        self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
+                        self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(
+                            pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
 
-            print(f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
-            # print(self.players[i].knowledge)
-            higher_possible = [w for w in self.players[i].knowledge if AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-            print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
-
+            # Printing knowledge of agents :
+            # print(
+            #     f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
+            # # print(self.players[i].knowledge)
+            # higher_possible = [w for w in self.players[i].knowledge if
+            #                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
+            # print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
 
     # Main loop that plays the game
     def play(self):
@@ -238,12 +309,16 @@ class Game:
 
                 if self.players[self.turn].bid_strategy == 'truthful':
                     self.current_bid = copy(self.cup.dice)
+                elif self.players[self.turn].bid_strategy == 'knowledge_based':
+                    self.current_bid = copy(self.cup.dice)
                 else:
                     self.current_bid = random_bid_return()  # random bid
 
+                self.update_knowledge()
+
                 print(f"[STARTING BID] Player {self.turn} bids: {self.current_bid}")
                 if self.press_to_continue:
-                    input("Press Enter to continue...\n")
+                    input("Press [Enter] to continue...\n")
                 self.update_turn()
                 self.state = states['believe/call_bluff_phase']
                 continue
@@ -266,26 +341,26 @@ class Game:
 
                 if not end_game:
                     if self.press_to_continue:
-                        input("Press Enter to continue...\n")
+                        input("Press [Enter] to continue...\n")
                 self.state = states['start']
                 continue
-            
+
             if self.state == states['poker_phase']:
                 self.state = states['roll_dice_phase']  # put here for continuing while this function has to be written
 
                 # wanneer een poker wordt gegooid & geloofd (phase/state van maken)
-	            # -> ga naar aparte functie voor een poker
-	            # -> alles is nu open
-	            # -> er mag 3x gegooid worden
-	            # -> 
-	
+                # -> ga naar aparte functie voor een poker
+                # -> alles is nu open
+                # -> er mag 3x gegooid worden
+                # ->
+
                 # welke poker ga ik voor? 
                 #     antwoord: de hoogste laat ik liggen
                 #         tenzij er 2 van een aantal liggen -> dan neem ik die (elke keer checken na gooien want
 
-            # ------------- These states are looped within one round --------------
+                # ------------- These states are looped within one round --------------
                 continue
-            
+
             if self.state == states['believe/call_bluff_phase']:
                 print(f'[TURN] of Player {self.turn}')
                 if self.determine_bluff(
