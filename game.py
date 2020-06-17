@@ -91,7 +91,7 @@ class Game:
 
         self.players[1].roll_strategy = 'greedy'
         self.players[1].bid_strategy = 'knowledge_based'
-        self.players[1].determine_bluff_strategy = 'knowledge_based'
+        self.players[1].determine_bluff_strategy = 'always_false'
 
         self.players[2].roll_strategy = 'random_lowest'
         self.players[2].bid_strategy = 'knowledge_based'
@@ -194,6 +194,88 @@ class Game:
         # TODO add knowledge based rolling, i.e: roll again if you have not reached the desired outcome
 
         # TODO implement rolling for pokers
+
+    def roll_poker(self, threshold):
+        to_throw = []
+
+        # Poker is thrown
+        if(is_poker(self.cup.dice)):
+            if(self.cup.dice[0] > threshold):
+                print('Poker beaten')
+                self.penalise_poker(2)
+            elif(self.cup.dice[0] == threshold):
+                print('Poker equalled')
+                self.penalise_poker(1)
+            else:
+                print('Poker thrown, but not high enough. Throwing all again.')
+                to_throw.extend([0,1,2])
+        
+        # Highest dice are equal
+        elif(self.cup.dice[0] == self.cup.dice[1]):
+            if(self.cup.dice[0] >= threshold):
+                print('Equal dice with value high enough, throwing dice 2 again.')
+                to_throw.append(2)
+            elif(self.cup.dice[2] >= threshold):
+                print('Equal dice with value NOT high enough, but lowest is. Throwing 0, 1 again.')
+                to_throw.extend([0,1])
+            else:
+                print('Equal dice with value NOT high enough, throwing all again.')
+                to_throw.extend([0,1,2])
+
+        # Lowest dice are equal
+        elif(self.cup.dice[1] == self.cup.dice[2]):
+            if(self.cup.dice[1] >= threshold):
+                print('Equal dice with value high enough, throwing dice 0 again.')
+                to_throw.append(0)
+            elif(self.cup.dice[0] >= threshold):
+                print('Equal dice with value NOT high enough, but highest is. Throwing 1, 2 again.')
+                to_throw.extend([1,2])
+            else:
+                print('Equal dice with value NOT high enough, throwing all again.')
+                to_throw.extend([0,1,2])
+
+        # No dice are equal
+        elif(self.cup.dice[0] >= threshold):
+            print('Highest dice beats threshold, throwing dice 1 and dice 2 again.')
+            to_throw.extend([1,2])
+        else:
+            print('No die was high enough, throwing all dice again.')
+            to_throw.extend([0,1,2])
+
+        return to_throw
+
+    def penalise_poker(self, outcome):
+        won = 2
+        equal = 1
+        lost = 0
+
+        print(f'[PENALISE POKER] The poker was {self.current_bid} and the cup has {self.cup.dice}')
+        if(outcome == won):
+            self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
+            print(f'Player {self.turn} has thrown a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
+        elif(outcome == equal):
+            print(f'Player {self.turn} has thrown the same poker! No player gets a penalty point.')
+        elif(outcome == lost):
+            self.players[self.turn].penalty_points += 1
+            print(f'Player {self.turn} did not throw high enough and gets one penalty point.')
+        
+        print('[SCORE] is now as follows:', end=" ")
+        for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
+            print(f'Player {i}: {self.players[i].penalty_points} points: ', end=" ")
+            print_string = [self.loser_name[j] for j in range(self.players[i].penalty_points)]
+            print("".join(print_string), end=" ")
+        print()  # print for new line
+
+        for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
+            if self.players[i].penalty_points == self.max_penalty:
+                print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
+                end_game = True
+                break
+
+        if not end_game:
+            if self.press_to_continue:
+                input("Press [Enter] to continue...\n")
+        self.state = states['start']
 
     def bidding(self, strategy):
         if strategy == 'truthful':
@@ -303,7 +385,9 @@ class Game:
             if self.state == states['start']:  # first turn is different than other turns,
                 print('------------ NEW ROUND --------------')
                 print(f'[STARTING TURN] of Player {self.turn}')
-                self.cup.roll_all()
+                # self.cup.roll_all()
+
+                self.cup.set_poker()
                 print(f"[STARTING ROLL] Player {self.turn} rolls the dice and rolls:")
                 print_dice(self.cup.dice)
 
@@ -321,6 +405,39 @@ class Game:
                     input("Press [Enter] to continue...\n")
                 self.update_turn()
                 self.state = states['believe/call_bluff_phase']
+                continue
+            
+            if self.state == states['poker_phase']:
+                threshold = self.cup.dice[0]
+                to_throw = []
+
+                print(f'[POKER PHASE] Player {self.turn} has three rolls to try and equal or beat {self.current_bid}.')
+                self.cup.roll_all()
+                print(f'[ROLL 1] Player {self.turn} rolls the dice and rolls:')
+                print_dice(self.cup.dice)
+                to_throw = self.roll_poker(threshold)
+                
+                print(f'[ROLL 2]')
+                for d in to_throw:
+                    print(f'Rolling dice {d}:')
+                    self.cup.roll_dice_with_value(self.cup.dice[d])
+                print_dice(self.cup.dice)
+                to_throw = self.roll_poker(threshold)
+
+                print(f'[ROLL 3]')
+                for d in to_throw:
+                    print(f'Rolling dice {d}:')
+                    self.cup.roll_dice_with_value(self.cup.dice[d])
+                print_dice(self.cup.dice)
+
+                if(is_poker(self.cup.dice) and self.cup.dice[0] > threshold):
+                    self.penalise_poker(2)
+                elif(is_poker(self.cup.dice) and self.cup.dice[0] == threshold):
+                    self.penalise_poker(1)
+                else:
+                    self.penalise_poker(0)
+
+                self.state = ['penalty_phase']
                 continue
 
             if self.state == states['penalty_phase']:
@@ -345,21 +462,7 @@ class Game:
                 self.state = states['start']
                 continue
 
-            if self.state == states['poker_phase']:
-                self.state = states['roll_dice_phase']  # put here for continuing while this function has to be written
-
-                # wanneer een poker wordt gegooid & geloofd (phase/state van maken)
-                # -> ga naar aparte functie voor een poker
-                # -> alles is nu open
-                # -> er mag 3x gegooid worden
-                # ->
-
-                # welke poker ga ik voor? 
-                #     antwoord: de hoogste laat ik liggen
-                #         tenzij er 2 van een aantal liggen -> dan neem ik die (elke keer checken na gooien want
-
                 # ------------- These states are looped within one round --------------
-                continue
 
             if self.state == states['believe/call_bluff_phase']:
                 print(f'[TURN] of Player {self.turn}')

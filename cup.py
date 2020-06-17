@@ -22,6 +22,12 @@ class Cup:
             self.dice.append(random.randint(1, 6))
         return self.dice.sort(reverse=True)
 
+    def set_poker(self):
+        self.dice = []
+        for _ in range(3):
+            self.dice.append(3)
+        return self.dice
+
     def roll_dice_with_value(self, value):
         if value in self.dice:
             # print(f'hand now = {self.dice}')
