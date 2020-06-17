@@ -271,7 +271,8 @@ class Game:
                 continue
             
             if self.state == states['poker_phase']:
-                self.state = states['roll_dice_phase'] #for continuing while this function has to be written
+                self.state = states['roll_dice_phase']  # put here for continuing while this function has to be written
+
                 # wanneer een poker wordt gegooid & geloofd (phase/state van maken)
 	            # -> ga naar aparte functie voor een poker
 	            # -> alles is nu open
