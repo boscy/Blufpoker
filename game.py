@@ -1,6 +1,6 @@
 from player import Player
 from cup import Cup
-from copy import copy
+from copy import copy, deepcopy
 import random
 import numpy as np
 
@@ -62,6 +62,35 @@ def print_dice(cup):
     print(base)
 
 
+def make_jpd(options, pk): # makes a joint probability of the possible throws, for calculating chances
+    # print(pk)
+    jpd = [deepcopy(options), [0]*len(options)]
+    for i in range(len(jpd[0])):
+        if len(pk) == 0: #three unknown dice
+            if jpd[0][i][0] == jpd[0][i][1] == jpd[0][i][2]: # three similar dice
+                jpd[1][i] = 1/216 # chance equal to (1/6)^3
+            elif jpd[0][i][0] == jpd[0][i][1] or jpd[0][i][0] == jpd[0][i][2] or jpd[0][i][1] == jpd[0][i][2]:  #two dice are the same
+                jpd[1][i] = 3/216
+            else: # all dice are different
+                jpd[1][i] = 6/216
+
+        elif len(pk) == 1: #two unknown dice
+            working_prob = deepcopy(jpd[0][i])
+            working_prob.remove(pk[0])
+            if working_prob[0] == working_prob[1]: # chance to roll the same dice
+                jpd[1][i] = 1 / 36
+            else:
+                jpd[1][i] = 2 / 36
+
+            # print(working_prob)
+
+        elif len(pk) == 2:  # one unknown dice > probability is 1/6 for all dice rolls
+            jpd[1][i] = 1 / 6
+
+
+    # print(sum(jpd[1]))
+    return jpd
+
 class Game:
     def __init__(self, n_players=3):
         """
@@ -84,15 +113,13 @@ class Game:
 
         # Agent strategies, TODO set all parameters from a config file
 
-
-
         self.players[0].roll_strategy = '1_lowest'
         self.players[0].bid_strategy = 'knowledge_based'
         self.players[0].determine_bluff_strategy = 'knowledge_based'
 
         self.players[1].roll_strategy = 'greedy'
         self.players[1].bid_strategy = 'knowledge_based'
-        self.players[1].determine_bluff_strategy = 'always_false'
+        self.players[1].determine_bluff_strategy = 'knowledge_based'
 
         self.players[2].roll_strategy = 'random_lowest'
         self.players[2].bid_strategy = 'knowledge_based'
@@ -128,19 +155,33 @@ class Game:
             if self.current_bid not in self.players[self.turn].knowledge:
                 return True
             else:
+
                 # TODO: determine values correctly, such that chances take into account that certain bids are less likely than others
-                believe_threshold = 1/6 + random.uniform((-1/12), (1/12))
+                jpd = make_jpd(self.players[self.turn].knowledge, self.public_knowledge) # make a joint probability distribution of the possible
+                print(jpd)
                 higher_possible = [w for w in self.players[self.turn].knowledge if
-                                   self.players[self.turn].knowledge.index(w) >= self.players[self.turn].knowledge.index(self.current_bid)]
-                print(f'percentage of possible higher worlds among possible worlds: {len(higher_possible) / len(self.players[self.turn].knowledge)}')
-                if len(higher_possible) / len(self.players[self.turn].knowledge) >= believe_threshold:
-                    print(f' {len(higher_possible) / len(self.players[self.turn].knowledge)} >= {believe_threshold}')
-                    return False # not a bluff -> believe
+                                   self.players[self.turn].knowledge.index(w) >= self.players[
+                                       self.turn].knowledge.index(self.current_bid)]
+
+                lower_possible = [w for w in self.players[self.turn].knowledge if
+                                   self.players[self.turn].knowledge.index(w) < self.players[
+                                       self.turn].knowledge.index(self.current_bid)]
+
+                probability = 0
+                for w in higher_possible:
+                    print(w)
+                    if w in jpd[0]:
+                        probability += jpd[1][jpd[0].index(w)]
+                print(probability)
+
+                print(f'percentage of possible higher worlds among possible worlds: {probability}')
+                believe_threshold = 3 / 12 + random.uniform((-3 / 12), (3 / 12))
+                if probability >= believe_threshold:
+                    print(f' {probability} >= {believe_threshold}')
+                    return False  # not a bluff -> believe
                 else:
-                    print(f' {len(higher_possible) / len(self.players[self.turn].knowledge)} < {believe_threshold}')
+                    print(f' {probability} < {believe_threshold}')
                     return True
-
-
 
     def roll_dice(self, roll_strategy):
 
@@ -209,8 +250,8 @@ class Game:
                 self.penalise_poker(1)
             else:
                 print('Poker thrown, but not high enough. Throwing all again.')
-                to_throw.extend([0,1,2])
-        
+                to_throw.extend([0, 1, 2])
+
         # Highest dice are equal
         elif self.cup.dice[0] == self.cup.dice[1]:
             if self.cup.dice[0] >= threshold:
@@ -218,10 +259,10 @@ class Game:
                 to_throw.append(2)
             elif self.cup.dice[2] >= threshold:
                 print('Equal dice with value NOT high enough, but lowest is. Throwing 0, 1 again.')
-                to_throw.extend([0,1])
+                to_throw.extend([0, 1])
             else:
                 print('Equal dice with value NOT high enough, throwing all again.')
-                to_throw.extend([0,1,2])
+                to_throw.extend([0, 1, 2])
 
         # Lowest dice are equal
         elif self.cup.dice[1] == self.cup.dice[2]:
@@ -230,18 +271,18 @@ class Game:
                 to_throw.append(0)
             elif self.cup.dice[0] >= threshold:
                 print('Equal dice with value NOT high enough, but highest is. Throwing 1, 2 again.')
-                to_throw.extend([1,2])
+                to_throw.extend([1, 2])
             else:
                 print('Equal dice with value NOT high enough, throwing all again.')
-                to_throw.extend([0,1,2])
+                to_throw.extend([0, 1, 2])
 
         # No dice are equal
         elif self.cup.dice[0] >= threshold:
             print('Highest dice beats threshold, throwing dice 1 and dice 2 again.')
-            to_throw.extend([1,2])
+            to_throw.extend([1, 2])
         else:
             print('No die was high enough, throwing all dice again.')
-            to_throw.extend([0,1,2])
+            to_throw.extend([0, 1, 2])
 
         return to_throw
 
@@ -251,32 +292,16 @@ class Game:
         lost = 0
 
         print(f'[PENALISE POKER] The poker was {self.current_bid} and the cup has {self.cup.dice}')
-        if(outcome == won):
+        if outcome == won:
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
-            print(f'Player {self.turn} has thrown a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
-        elif(outcome == equal):
+            print(
+                f'Player {self.turn} has thrown a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
+            self.turn = (self.turn + self.n_players - 1) % self.n_players  # previous player can start again
+        elif outcome == equal:
             print(f'Player {self.turn} has thrown the same poker! No player gets a penalty point.')
-        elif(outcome == lost):
+        elif outcome == lost:
             self.players[self.turn].penalty_points += 1
             print(f'Player {self.turn} did not throw high enough and gets one penalty point.')
-        
-        print('[SCORE] is now as follows:', end=" ")
-        for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
-            print(f'Player {i}: {self.players[i].penalty_points} points: ', end=" ")
-            print_string = [self.loser_name[j] for j in range(self.players[i].penalty_points)]
-            print("".join(print_string), end=" ")
-        print()  # print for new line
-
-        for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
-            if self.players[i].penalty_points == self.max_penalty:
-                print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
-                self.end_game = True
-                break
-
-        if not self.end_game:
-            if self.press_to_continue:
-                input("Press [Enter] to continue...\n")
-        self.state = states['start']
 
     def bidding(self, strategy):
         if strategy == 'truthful':
@@ -294,9 +319,6 @@ class Game:
                     self.current_bid = AllPossibleWorlds[
                         AllPossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
 
-                else:  # maximum bid is reached
-                    # TODO implement bidding for pokers
-                    print('WTF do we do now')
 
         elif strategy == 'always_overbid':
             random_add = random.randint(1, self.max_overbid)
@@ -344,7 +366,7 @@ class Game:
                 self.cup.dice):  # the bid was higher than the cup, previous player was bluffing/lying
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
             print(
-                f'Player {self.turn} was right, Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')  # TODO print Smegma
+                f'Player {self.turn} was right, Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
             self.turn = (self.turn + self.n_players - 1) % self.n_players  # previous player can start again
         else:
             self.players[self.turn].penalty_points += 1
@@ -374,8 +396,8 @@ class Game:
             # print(
             #     f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
             # # print(self.players[i].knowledge)
-            # higher_possible = [w for w in self.players[i].knowledge if
-            #                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
+            higher_possible = [w for w in self.players[i].knowledge if
+                               AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
             # print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
 
     # Main loop that plays the game
@@ -387,8 +409,10 @@ class Game:
                 print('------------ NEW ROUND --------------')
                 print(f'[STARTING TURN] of Player {self.turn}')
                 # self.cup.roll_all()
+                self.public_knowledge.clear()
+                self.cup.dice = [6,6,4]
+                # self.cup.roll_all()
 
-                self.cup.set_poker()
                 print(f"[STARTING ROLL] Player {self.turn} rolls the dice and rolls:")
                 print_dice(self.cup.dice)
 
@@ -407,9 +431,9 @@ class Game:
                 self.update_turn()
                 self.state = states['believe/call_bluff_phase']
                 continue
-            
+
             if self.state == states['poker_phase']:
-                threshold = self.cup.dice[0]
+                threshold = self.current_bid[0]
                 to_throw = []
 
                 print(f'[POKER PHASE] Player {self.turn} has three rolls to try and equal or beat {self.current_bid}.')
@@ -420,7 +444,6 @@ class Game:
                     input("Press [Enter] to continue...\n")
                 to_throw = self.roll_poker(threshold)
 
-                
                 print(f'[ROLL 2]')
                 for d in to_throw:
                     print(f'Rolling dice {d}:')
@@ -429,7 +452,6 @@ class Game:
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 to_throw = self.roll_poker(threshold)
-
 
                 print(f'[ROLL 3]')
                 for d in to_throw:
@@ -444,7 +466,23 @@ class Game:
                 else:
                     self.penalise_poker(0)
 
-                self.state = ['start']
+                print('[SCORE] is now as follows:', end=" ")
+                for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
+                    print(f'Player {i}: {self.players[i].penalty_points} points: ', end=" ")
+                    print_string = [self.loser_name[j] for j in range(self.players[i].penalty_points)]
+                    print("".join(print_string), end=" ")
+                print()  # print for new line
+
+                for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
+                    if self.players[i].penalty_points == self.max_penalty:
+                        print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
+                        self.end_game = True
+                        break
+
+                if not self.end_game:
+                    if self.press_to_continue:
+                        input("Press [Enter] to continue...\n")
+                self.state = states['start']
                 continue
 
             if self.state == states['penalty_phase']:
