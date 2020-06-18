@@ -109,8 +109,9 @@ class Game:
         self.max_overbid = 3
         self.believe_percentage = 80
 
-        self.press_to_continue = False
-        # Agent strategies, TODO set all parameters from a config file
+        self.press_to_continue = True
+
+        ############# Agent strategies configuration ######################
 
         self.players[0].roll_strategy = 'random'
         self.players[0].bid_strategy = 'truthful'

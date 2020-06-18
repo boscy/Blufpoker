@@ -66,23 +66,23 @@ def main():
 
     # print([s for s in AllPossibleWorlds if public_knowledge in s])
     # print(list(s for s in AllPossibleWorlds if s.count(pk1) >= 2))
-    i = 0
-    while i < 100:
-    # while new_game:
+    # i = 0
+    # while i < 100:
+    while new_game:
         game = Game()
         game.play()
-        i += 1
-        # another_game = input("Another game? [y/n]")
-        # while another_game != 'y' and another_game != 'n':
-        #     another_game = input("Please try again: Another game? [y/n]")
-        #
-        # if another_game == 'n':
-        #     new_game = False
-        #     print('Goodbye!')
-        #
-        # if another_game == 'y':
-        #     print('Starting new game!')
-        #     continue
+        # i += 1
+        another_game = input("Another game? [y/n]")
+        while another_game != 'y' and another_game != 'n':
+            another_game = input("Please try again: Another game? [y/n]")
+
+        if another_game == 'n':
+            new_game = False
+            print('Goodbye!')
+
+        if another_game == 'y':
+            print('Starting new game!')
+            continue
     print(f'Player 1 losses:{losscount[0]},Player 2 losses:{losscount[1]},Player 3 losses:{losscount[2]}')
 
 if __name__ == '__main__':
