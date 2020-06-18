@@ -62,34 +62,31 @@ def print_dice(cup):
     print(base)
 
 
-def make_jpd(options, pk): # makes a joint probability of the possible throws, for calculating chances
-    # print(pk)
-    jpd = [deepcopy(options), [0]*len(options)]
-    for i in range(len(jpd[0])):
-        if len(pk) == 0: #three unknown dice
-            if jpd[0][i][0] == jpd[0][i][1] == jpd[0][i][2]: # three similar dice
-                jpd[1][i] = 1/216 # chance equal to (1/6)^3
-            elif jpd[0][i][0] == jpd[0][i][1] or jpd[0][i][0] == jpd[0][i][2] or jpd[0][i][1] == jpd[0][i][2]:  #two dice are the same
-                jpd[1][i] = 3/216
-            else: # all dice are different
-                jpd[1][i] = 6/216
+def make_jpd(options, pk):  # makes a joint probability of the possible rolls, for calculating chances
 
-        elif len(pk) == 1: #two unknown dice
+    jpd = [deepcopy(options), [0] * len(options)]
+    for i in range(len(jpd[0])):
+        if len(pk) == 0:  # three unknown dice
+            if jpd[0][i][0] == jpd[0][i][1] == jpd[0][i][2]:  # three similar dice
+                jpd[1][i] = 1 / 216  # chance equal to (1/6)^3
+            elif jpd[0][i][0] == jpd[0][i][1] or jpd[0][i][0] == jpd[0][i][2] or jpd[0][i][1] == jpd[0][i][2]:  # two dice are the same
+                jpd[1][i] = 3 / 216
+            else:  # all dice are different
+                jpd[1][i] = 6 / 216
+
+        elif len(pk) == 1:  # two unknown dice
             working_prob = deepcopy(jpd[0][i])
             working_prob.remove(pk[0])
-            if working_prob[0] == working_prob[1]: # chance to roll the same dice
+            if working_prob[0] == working_prob[1]:  # chance to roll the same dice
                 jpd[1][i] = 1 / 36
             else:
                 jpd[1][i] = 2 / 36
 
-            # print(working_prob)
-
         elif len(pk) == 2:  # one unknown dice > probability is 1/6 for all dice rolls
             jpd[1][i] = 1 / 6
 
-
-    # print(sum(jpd[1]))
     return jpd
+
 
 class Game:
     def __init__(self, n_players=3):
@@ -156,16 +153,16 @@ class Game:
                 return True
             else:
 
-                # TODO: determine values correctly, such that chances take into account that certain bids are less likely than others
-                jpd = make_jpd(self.players[self.turn].knowledge, self.public_knowledge) # make a joint probability distribution of the possible
+                jpd = make_jpd(self.players[self.turn].knowledge,
+                               self.public_knowledge)  # make a joint probability distribution of the possible rolls
                 print(jpd)
                 higher_possible = [w for w in self.players[self.turn].knowledge if
                                    self.players[self.turn].knowledge.index(w) >= self.players[
                                        self.turn].knowledge.index(self.current_bid)]
 
                 lower_possible = [w for w in self.players[self.turn].knowledge if
-                                   self.players[self.turn].knowledge.index(w) < self.players[
-                                       self.turn].knowledge.index(self.current_bid)]
+                                  self.players[self.turn].knowledge.index(w) < self.players[
+                                      self.turn].knowledge.index(self.current_bid)]
 
                 probability = 0
                 for w in higher_possible:
@@ -238,9 +235,9 @@ class Game:
         # TODO implement rolling for pokers
 
     def roll_poker(self, threshold):
-        to_throw = []
+        to_roll = []
 
-        # Poker is thrown
+        # Poker is rolled
         if is_poker(self.cup.dice):
             if self.cup.dice[0] > threshold:
                 print('Poker beaten')
@@ -249,42 +246,42 @@ class Game:
                 print('Poker equalled')
                 self.penalise_poker(1)
             else:
-                print('Poker thrown, but not high enough. Throwing all again.')
-                to_throw.extend([0, 1, 2])
+                print('Poker rolled, but not high enough. rolling all again.')
+                to_roll.extend([0, 1, 2])
 
         # Highest dice are equal
         elif self.cup.dice[0] == self.cup.dice[1]:
             if self.cup.dice[0] >= threshold:
-                print('Equal dice with value high enough, throwing dice 2 again.')
-                to_throw.append(2)
+                print('Equal dice with value high enough, rolling dice 2 again.')
+                to_roll.append(2)
             elif self.cup.dice[2] >= threshold:
-                print('Equal dice with value NOT high enough, but lowest is. Throwing 0, 1 again.')
-                to_throw.extend([0, 1])
+                print('Equal dice with value NOT high enough, but lowest is. rolling 0, 1 again.')
+                to_roll.extend([0, 1])
             else:
-                print('Equal dice with value NOT high enough, throwing all again.')
-                to_throw.extend([0, 1, 2])
+                print('Equal dice with value NOT high enough, rolling all again.')
+                to_roll.extend([0, 1, 2])
 
         # Lowest dice are equal
         elif self.cup.dice[1] == self.cup.dice[2]:
             if self.cup.dice[1] >= threshold:
-                print('Equal dice with value high enough, throwing dice 0 again.')
-                to_throw.append(0)
+                print('Equal dice with value high enough, rolling dice 0 again.')
+                to_roll.append(0)
             elif self.cup.dice[0] >= threshold:
-                print('Equal dice with value NOT high enough, but highest is. Throwing 1, 2 again.')
-                to_throw.extend([1, 2])
+                print('Equal dice with value NOT high enough, but highest is. rolling 1, 2 again.')
+                to_roll.extend([1, 2])
             else:
-                print('Equal dice with value NOT high enough, throwing all again.')
-                to_throw.extend([0, 1, 2])
+                print('Equal dice with value NOT high enough, rolling all again.')
+                to_roll.extend([0, 1, 2])
 
         # No dice are equal
         elif self.cup.dice[0] >= threshold:
-            print('Highest dice beats threshold, throwing dice 1 and dice 2 again.')
-            to_throw.extend([1, 2])
+            print('Highest dice beats threshold, rolling dice 1 and dice 2 again.')
+            to_roll.extend([1, 2])
         else:
-            print('No die was high enough, throwing all dice again.')
-            to_throw.extend([0, 1, 2])
+            print('No die was high enough, rolling all dice again.')
+            to_roll.extend([0, 1, 2])
 
-        return to_throw
+        return to_roll
 
     def penalise_poker(self, outcome):
         won = 2
@@ -295,13 +292,13 @@ class Game:
         if outcome == won:
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
             print(
-                f'Player {self.turn} has thrown a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
+                f'Player {self.turn} has rolled a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
             self.turn = (self.turn + self.n_players - 1) % self.n_players  # previous player can start again
         elif outcome == equal:
-            print(f'Player {self.turn} has thrown the same poker! No player gets a penalty point.')
+            print(f'Player {self.turn} has rolled the same poker! No player gets a penalty point.')
         elif outcome == lost:
             self.players[self.turn].penalty_points += 1
-            print(f'Player {self.turn} did not throw high enough and gets one penalty point.')
+            print(f'Player {self.turn} did not roll high enough and gets one penalty point.')
 
     def bidding(self, strategy):
         if strategy == 'truthful':
@@ -410,7 +407,7 @@ class Game:
                 print(f'[STARTING TURN] of Player {self.turn}')
                 # self.cup.roll_all()
                 self.public_knowledge.clear()
-                self.cup.dice = [6,6,4]
+                self.cup.dice = [6, 6, 4]
                 # self.cup.roll_all()
 
                 print(f"[STARTING ROLL] Player {self.turn} rolls the dice and rolls:")
@@ -434,7 +431,7 @@ class Game:
 
             if self.state == states['poker_phase']:
                 threshold = self.current_bid[0]
-                to_throw = []
+                to_roll = []
 
                 print(f'[POKER PHASE] Player {self.turn} has three rolls to try and equal or beat {self.current_bid}.')
                 self.cup.roll_all()
@@ -442,19 +439,19 @@ class Game:
                 print_dice(self.cup.dice)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
-                to_throw = self.roll_poker(threshold)
+                to_roll = self.roll_poker(threshold)
 
                 print(f'[ROLL 2]')
-                for d in to_throw:
+                for d in to_roll:
                     print(f'Rolling dice {d}:')
                     self.cup.roll_dice_with_value(self.cup.dice[d])
                 print_dice(self.cup.dice)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
-                to_throw = self.roll_poker(threshold)
+                to_roll = self.roll_poker(threshold)
 
                 print(f'[ROLL 3]')
-                for d in to_throw:
+                for d in to_roll:
                     print(f'Rolling dice {d}:')
                     self.cup.roll_dice_with_value(self.cup.dice[d])
                 print_dice(self.cup.dice)
