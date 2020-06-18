@@ -110,22 +110,22 @@ class Game:
 
         # Agent strategies, TODO set all parameters from a config file
 
-        self.players[0].roll_strategy = '1_lowest'
+        self.players[0].roll_strategy = 'knowledge_based'
         self.players[0].bid_strategy = 'knowledge_based'
         self.players[0].determine_bluff_strategy = 'knowledge_based'
 
-        self.players[1].roll_strategy = 'greedy'
+        self.players[1].roll_strategy = 'knowledge_based'
         self.players[1].bid_strategy = 'knowledge_based'
         self.players[1].determine_bluff_strategy = 'knowledge_based'
 
-        self.players[2].roll_strategy = 'random_lowest'
+        self.players[2].roll_strategy = 'knowledge_based'
         self.players[2].bid_strategy = 'knowledge_based'
         self.players[2].determine_bluff_strategy = 'knowledge_based'
 
     def update_turn(self):  # sets turn to the next player
         self.turn = (self.turn + 1) % self.n_players
 
-    def bid_possible(self, bid, strategy):
+    def bid_possible(self, bid):
         if AllPossibleWorlds.index(self.current_bid) < AllPossibleWorlds.index(bid):
             print(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
             # self.print_dice(bid)
@@ -155,7 +155,7 @@ class Game:
 
                 jpd = make_jpd(self.players[self.turn].knowledge,
                                self.public_knowledge)  # make a joint probability distribution of the possible rolls
-                print(jpd)
+                # print(jpd)
                 higher_possible = [w for w in self.players[self.turn].knowledge if
                                    self.players[self.turn].knowledge.index(w) >= self.players[
                                        self.turn].knowledge.index(self.current_bid)]
@@ -166,13 +166,13 @@ class Game:
 
                 probability = 0
                 for w in higher_possible:
-                    print(w)
+                    # print(w)
                     if w in jpd[0]:
                         probability += jpd[1][jpd[0].index(w)]
-                print(probability)
 
                 print(f'percentage of possible higher worlds among possible worlds: {probability}')
-                believe_threshold = 3 / 12 + random.uniform((-3 / 12), (3 / 12))
+                believe_threshold = 3 / 12 + random.uniform((-3 / 12), (1 / 12))
+                #TODO add variable threshold depending on public knowledge / first turn
                 if probability >= believe_threshold:
                     print(f' {probability} >= {believe_threshold}')
                     return False  # not a bluff -> believe
@@ -181,7 +181,6 @@ class Game:
                     return True
 
     def roll_dice(self, roll_strategy):
-
         # dice are always ordered, so ranked from highest to lowest
         # maintain which dice are rolled, such that we can know what can be set as public knowledge
         dicecopy = [copy(self.cup.dice), [0, 0, 0]]  # make a copy of the dice and whether they are rolled
@@ -195,7 +194,7 @@ class Game:
 
         elif roll_strategy == '1_lowest':
             print('[ROLL] Rolling 1 lowest die ')
-            self.cup.roll_dice_with_value(dicecopy[0][2])  # rerolls the lowest die
+            self.cup.roll_dice_with_value(dicecopy[0][2])  # rolls the lowest die
             dicecopy[1][2] = 1
 
         elif roll_strategy == 'random_lowest':
@@ -222,6 +221,49 @@ class Game:
                 self.cup.roll_dice_with_value(dicecopy[0][2])
                 dicecopy[1][2] = 1
 
+        elif roll_strategy == 'knowledge_based':
+            # Knowledge based rolling strategy
+
+            self.cup.roll_dice_with_value(dicecopy[0][2])  # always rolls the lowest die first, this always has the highest chance of getting to a higher bet
+            dicecopy[1][2] = 1
+
+            if not self.bid_possible(self.cup.dice): # if the cup is not higher than the bid, make decision whether to roll another die or bluff
+                print('First roll did not cause for a higher value than the current bid')
+                # implement small chance (1/6) of bluffing on poker in bidding round, if two dice can be displayed
+                if dicecopy[0][0] == dicecopy[0][1] and random.randint(0,1000) < 167: # first two dice are the same
+                    self.players[self.turn].bluff_poker = True
+                    self.players[self.turn].bluff_value = dicecopy[0][0]
+
+                # Roll for 6s when they are not in the bid and can still be rolled
+                elif not 6 in self.current_bid:  # if there is no 6 in the current bid, another die can be rolled
+                    print('Rolling for a higher value')
+                    self.cup.roll_dice_with_value(dicecopy[0][1])
+                    dicecopy[1][1] = 1
+
+                    if not self.bid_possible(self.cup.dice):  # if the cup is still not higher than the bid, make decision whether to roll another die
+                        print('Rolling for a higher value')
+                        self.cup.roll_dice_with_value(dicecopy[0][0])
+                        dicecopy[1][0] = 1
+
+                    elif random.randint(1,100) <  50: # a higher bid is already obtained, but last dice might still be rolled to get a 6 #TODO: maybe work out probability
+                        print(f'[ROLL] Cup is already higher, but player is trying to roll {dicecopy[0][0]} to a higher value')
+                        self.cup.roll_dice_with_value(dicecopy[0][0])
+                        dicecopy[1][0] = 1
+
+
+                # otherwise maybe roll, or maybe bluff, depending on the value of the remaining dice
+                else: # there is at least a 6 in the bid, now there are 2 possibilities:
+                    if self.current_bid.count(6) == 1: # there is only one 6 in the bid (must be the first)
+                        # implement a chance to roll the other dice, otherwise go to bid phase and bluff
+                        if random.randint(1,1000) > (1000 * dicecopy[0][1] / 6): # a lower dice value has a higher chance to be thrown
+                            print(f'[ROLL] Trying to roll {dicecopy[0][1]} to a higher value')
+                            self.cup.roll_dice_with_value(dicecopy[0][1])
+                            dicecopy[1][1] = 1
+
+                    elif dicecopy[0][0] == dicecopy[0][0] == 6: # otherwise both unrolled dice are 6, a bluff will be made in bidding phase on the basis of knowledge
+                        self.players[self.turn].bluff_poker = True
+                        self.players[self.turn].bluff_value = dicecopy[0][0]
+
         # print(dicecopy)
         self.public_knowledge = []
         for i in range(2):
@@ -230,9 +272,6 @@ class Game:
                 # print(f'value = {value}')
                 self.public_knowledge.append(value)
 
-        # TODO add knowledge based rolling, i.e: roll again if you have not reached the desired outcome
-
-        # TODO implement rolling for pokers
 
     def roll_poker(self, threshold):
         to_roll = []
@@ -302,7 +341,7 @@ class Game:
 
     def bidding(self, strategy):
         if strategy == 'truthful':
-            if self.bid_possible(self.cup.dice, strategy):
+            if self.bid_possible(self.cup.dice):
                 self.current_bid = copy(self.cup.dice)
                 # print('[DEBUG] copy the values')
             else:
@@ -329,8 +368,13 @@ class Game:
 
         elif strategy == 'knowledge_based':
             # The knowledge agent bids truthfully given that it rolled high enough or bluffs giving the most believable lie with a high enough value.
-            if self.bid_possible(self.cup.dice, strategy):  # bid truthful if possible
+            if self.bid_possible(self.cup.dice):  # bid truthful if possible
                 self.current_bid = copy(self.cup.dice)
+
+            elif self.players[self.turn].bluff_poker: # decided to bluff at rolling phase
+                print('Bluffing for poker, since its possible')
+                self.current_bid = [self.players[self.turn].bluff_value] * 3
+                self.players[self.turn].bluff_poker = False
             else:  # truthful bet impossible, look for a smart bluff
 
                 # determine the possible bets for the next player (now implemented for all players), when bluffing
@@ -351,7 +395,8 @@ class Game:
                                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
                 print(f'possible bluffs:{higher_possible}')
                 if len(higher_possible) != 0:  # there is at least one higher possible world for bluffing
-                    self.current_bid = higher_possible[0]
+                    random_higher = random.randint(0, 1)
+                    self.current_bid = higher_possible[random_higher]
                 else:  # there is no possible bluff
                     if (AllPossibleWorlds.index(self.current_bid) + 1) < 56:
                         self.current_bid = AllPossibleWorlds[
@@ -407,8 +452,8 @@ class Game:
                 print(f'[STARTING TURN] of Player {self.turn}')
                 # self.cup.roll_all()
                 self.public_knowledge.clear()
-                self.cup.dice = [6, 6, 4]
-                # self.cup.roll_all()
+                # self.cup.dice = [6, 6, 4]
+                self.cup.roll_all()
 
                 print(f"[STARTING ROLL] Player {self.turn} rolls the dice and rolls:")
                 print_dice(self.cup.dice)

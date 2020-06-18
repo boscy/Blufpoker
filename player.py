@@ -14,6 +14,8 @@ class Player:
         self.determine_bluff_strategy = 'random'
         self.roll_strategy = 'random'
         self.bid_strategy = 'truthful'
+        self.bluff_poker = False
+        self.bluff_value = 0
         self.penalty_points = 0
 
     def set_bid(self, bidnumbers):
