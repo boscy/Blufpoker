@@ -68,6 +68,7 @@ class Game:
         Main function for initializing the game
         """
         self.players = [Player() for _ in range(n_players)]
+        self.end_game = False
         self.current_bid = []
         self.public_knowledge = []
         self.n_players = n_players
@@ -199,11 +200,11 @@ class Game:
         to_throw = []
 
         # Poker is thrown
-        if(is_poker(self.cup.dice)):
-            if(self.cup.dice[0] > threshold):
+        if is_poker(self.cup.dice):
+            if self.cup.dice[0] > threshold:
                 print('Poker beaten')
                 self.penalise_poker(2)
-            elif(self.cup.dice[0] == threshold):
+            elif self.cup.dice[0] == threshold:
                 print('Poker equalled')
                 self.penalise_poker(1)
             else:
@@ -211,11 +212,11 @@ class Game:
                 to_throw.extend([0,1,2])
         
         # Highest dice are equal
-        elif(self.cup.dice[0] == self.cup.dice[1]):
-            if(self.cup.dice[0] >= threshold):
+        elif self.cup.dice[0] == self.cup.dice[1]:
+            if self.cup.dice[0] >= threshold:
                 print('Equal dice with value high enough, throwing dice 2 again.')
                 to_throw.append(2)
-            elif(self.cup.dice[2] >= threshold):
+            elif self.cup.dice[2] >= threshold:
                 print('Equal dice with value NOT high enough, but lowest is. Throwing 0, 1 again.')
                 to_throw.extend([0,1])
             else:
@@ -223,11 +224,11 @@ class Game:
                 to_throw.extend([0,1,2])
 
         # Lowest dice are equal
-        elif(self.cup.dice[1] == self.cup.dice[2]):
-            if(self.cup.dice[1] >= threshold):
+        elif self.cup.dice[1] == self.cup.dice[2]:
+            if self.cup.dice[1] >= threshold:
                 print('Equal dice with value high enough, throwing dice 0 again.')
                 to_throw.append(0)
-            elif(self.cup.dice[0] >= threshold):
+            elif self.cup.dice[0] >= threshold:
                 print('Equal dice with value NOT high enough, but highest is. Throwing 1, 2 again.')
                 to_throw.extend([1,2])
             else:
@@ -235,7 +236,7 @@ class Game:
                 to_throw.extend([0,1,2])
 
         # No dice are equal
-        elif(self.cup.dice[0] >= threshold):
+        elif self.cup.dice[0] >= threshold:
             print('Highest dice beats threshold, throwing dice 1 and dice 2 again.')
             to_throw.extend([1,2])
         else:
@@ -269,10 +270,10 @@ class Game:
         for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
             if self.players[i].penalty_points == self.max_penalty:
                 print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
-                end_game = True
+                self.end_game = True
                 break
 
-        if not end_game:
+        if not self.end_game:
             if self.press_to_continue:
                 input("Press [Enter] to continue...\n")
         self.state = states['start']
@@ -379,8 +380,8 @@ class Game:
 
     # Main loop that plays the game
     def play(self):
-        end_game = False
-        while not end_game:
+
+        while not self.end_game:
 
             if self.state == states['start']:  # first turn is different than other turns,
                 print('------------ NEW ROUND --------------')
@@ -415,14 +416,20 @@ class Game:
                 self.cup.roll_all()
                 print(f'[ROLL 1] Player {self.turn} rolls the dice and rolls:')
                 print_dice(self.cup.dice)
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 to_throw = self.roll_poker(threshold)
+
                 
                 print(f'[ROLL 2]')
                 for d in to_throw:
                     print(f'Rolling dice {d}:')
                     self.cup.roll_dice_with_value(self.cup.dice[d])
                 print_dice(self.cup.dice)
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 to_throw = self.roll_poker(threshold)
+
 
                 print(f'[ROLL 3]')
                 for d in to_throw:
@@ -430,14 +437,14 @@ class Game:
                     self.cup.roll_dice_with_value(self.cup.dice[d])
                 print_dice(self.cup.dice)
 
-                if(is_poker(self.cup.dice) and self.cup.dice[0] > threshold):
+                if is_poker(self.cup.dice) and self.cup.dice[0] > threshold:
                     self.penalise_poker(2)
-                elif(is_poker(self.cup.dice) and self.cup.dice[0] == threshold):
+                elif is_poker(self.cup.dice) and self.cup.dice[0] == threshold:
                     self.penalise_poker(1)
                 else:
                     self.penalise_poker(0)
 
-                self.state = ['penalty_phase']
+                self.state = ['start']
                 continue
 
             if self.state == states['penalty_phase']:
@@ -453,10 +460,10 @@ class Game:
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
                     if self.players[i].penalty_points == self.max_penalty:
                         print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
-                        end_game = True
+                        self.end_game = True
                         break
 
-                if not end_game:
+                if not self.end_game:
                     if self.press_to_continue:
                         input("Press [Enter] to continue...\n")
                 self.state = states['start']
