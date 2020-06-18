@@ -17,6 +17,7 @@ class Player:
         self.bluff_poker = False
         self.bluff_value = 0
         self.penalty_points = 0
+        self.losses = 0
 
     def set_bid(self, bidnumbers):
         self.bid = bidnumbers

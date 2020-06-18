@@ -4,6 +4,8 @@ from copy import copy, deepcopy
 import random
 import numpy as np
 
+losscount = [0, 0, 0]
+
 AllPossibleWorlds = [  # ordered from low to high
     [2, 1, 1], [2, 2, 1],
     [3, 1, 1], [3, 2, 1], [3, 2, 2], [3, 3, 1], [3, 3, 2],
@@ -95,28 +97,36 @@ class Game:
         """
         self.players = [Player() for _ in range(n_players)]
         self.end_game = False
+        self.first_turn = True
         self.current_bid = []
         self.public_knowledge = []
         self.n_players = n_players
         self.cup = Cup()
-        self.turn = 0
+        self.turn = random.randint(0,n_players-1) # first turn is random
         self.state = states['start']
-        self.loser_name = ['S', 'M', 'E', 'G', 'M', 'A']  # TODO make is such that user can set this.
+        self.loser_name = ['H', 'O', 'R', 'S', 'E']  # TODO make is such that user can set this.
         self.max_penalty = len(self.loser_name)
         self.max_overbid = 3
         self.believe_percentage = 80
 
-        self.press_to_continue = True
-
+        self.press_to_continue = False
         # Agent strategies, TODO set all parameters from a config file
 
-        self.players[0].roll_strategy = 'knowledge_based'
-        self.players[0].bid_strategy = 'knowledge_based'
-        self.players[0].determine_bluff_strategy = 'knowledge_based'
+        self.players[0].roll_strategy = 'random'
+        self.players[0].bid_strategy = 'truthful'
+        self.players[0].determine_bluff_strategy = 'random'
 
-        self.players[1].roll_strategy = 'knowledge_based'
-        self.players[1].bid_strategy = 'knowledge_based'
-        self.players[1].determine_bluff_strategy = 'knowledge_based'
+        self.players[0].roll_strategy = 'greedy'
+        self.players[0].bid_strategy = 'always_overbid'
+        self.players[0].determine_bluff_strategy = 'always_true'
+
+        self.players[1].roll_strategy = 'random'
+        self.players[1].bid_strategy = 'truthful'
+        self.players[1].determine_bluff_strategy = 'random'
+
+        # self.players[1].roll_strategy = 'greedy'
+        # self.players[1].bid_strategy = 'always_overbid'
+        # self.players[1].determine_bluff_strategy = 'always_true'
 
         self.players[2].roll_strategy = 'knowledge_based'
         self.players[2].bid_strategy = 'knowledge_based'
@@ -151,6 +161,7 @@ class Game:
         elif strategy == 'knowledge_based':
             if self.current_bid not in self.players[self.turn].knowledge:
                 return True
+
             else:
 
                 jpd = make_jpd(self.players[self.turn].knowledge,
@@ -170,9 +181,22 @@ class Game:
                     if w in jpd[0]:
                         probability += jpd[1][jpd[0].index(w)]
 
-                print(f'percentage of possible higher worlds among possible worlds: {probability}')
-                believe_threshold = 3 / 12 + random.uniform((-3 / 12), (1 / 12))
-                #TODO add variable threshold depending on public knowledge / first turn
+                print(f'Probability of rolling possible higher worlds among possible worlds: {probability}')
+
+                # add variable threshold depending on public knowledge (since belief probability depends on proportion of possible worlds, which is more variable with less pk)
+                if len(self.public_knowledge) == 2:
+                    believe_threshold = np.random.normal(3 / 12, 1/12, 1)
+                elif len(self.public_knowledge) == 1:
+                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1)*0.75
+                else:
+                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1)*0.5
+
+                # NOTE this believe threshold will always have some kind of arbitrariness, which is due to uncertainty. But this is also the case for human players
+                # Finding the correct normal distribution is quite hard.
+
+
+
+
                 if probability >= believe_threshold:
                     print(f' {probability} >= {believe_threshold}')
                     return False  # not a bluff -> believe
@@ -229,21 +253,28 @@ class Game:
 
             if not self.bid_possible(self.cup.dice): # if the cup is not higher than the bid, make decision whether to roll another die or bluff
                 print('First roll did not cause for a higher value than the current bid')
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 # implement small chance (1/6) of bluffing on poker in bidding round, if two dice can be displayed
                 if dicecopy[0][0] == dicecopy[0][1] and random.randint(0,1000) < 167: # first two dice are the same
                     self.players[self.turn].bluff_poker = True
                     self.players[self.turn].bluff_value = dicecopy[0][0]
+                    print('Two open dice are the same, bluffing for poker, since its possible')
 
                 # Roll for 6s when they are not in the bid and can still be rolled
-                elif not 6 in self.current_bid:  # if there is no 6 in the current bid, another die can be rolled
+                elif 6 not in self.current_bid:  # if there is no 6 in the current bid, another die can be rolled
                     print('Rolling for a higher value')
                     self.cup.roll_dice_with_value(dicecopy[0][1])
                     dicecopy[1][1] = 1
+                    if self.press_to_continue:
+                        input("Press [Enter] to continue...\n")
 
                     if not self.bid_possible(self.cup.dice):  # if the cup is still not higher than the bid, make decision whether to roll another die
-                        print('Rolling for a higher value')
+                        print('Rolling for a higher value (2)')
                         self.cup.roll_dice_with_value(dicecopy[0][0])
                         dicecopy[1][0] = 1
+                        if self.press_to_continue:
+                            input("Press [Enter] to continue...\n")
 
                     elif random.randint(1,100) <  50: # a higher bid is already obtained, but last dice might still be rolled to get a 6 #TODO: maybe work out probability
                         print(f'[ROLL] Cup is already higher, but player is trying to roll {dicecopy[0][0]} to a higher value')
@@ -259,6 +290,8 @@ class Game:
                             print(f'[ROLL] Trying to roll {dicecopy[0][1]} to a higher value')
                             self.cup.roll_dice_with_value(dicecopy[0][1])
                             dicecopy[1][1] = 1
+                        else:
+                            print(f'Player thinks bluffing with the dice open is less risky than to roll {dicecopy[0][1]}')
 
                     elif dicecopy[0][0] == dicecopy[0][0] == 6: # otherwise both unrolled dice are 6, a bluff will be made in bidding phase on the basis of knowledge
                         self.players[self.turn].bluff_poker = True
@@ -372,7 +405,6 @@ class Game:
                 self.current_bid = copy(self.cup.dice)
 
             elif self.players[self.turn].bluff_poker: # decided to bluff at rolling phase
-                print('Bluffing for poker, since its possible')
                 self.current_bid = [self.players[self.turn].bluff_value] * 3
                 self.players[self.turn].bluff_poker = False
             else:  # truthful bet impossible, look for a smart bluff
@@ -395,8 +427,15 @@ class Game:
                                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
                 print(f'possible bluffs:{higher_possible}')
                 if len(higher_possible) != 0:  # there is at least one higher possible world for bluffing
-                    random_higher = random.randint(0, 1)
-                    self.current_bid = higher_possible[random_higher]
+                    # create some randomness in bluffing
+                    if len(higher_possible) > 2:
+                        random_higher = random.randint(0, 2)
+                        self.current_bid = higher_possible[random_higher]
+                    elif len(higher_possible) > 1:
+                        random_higher = random.randint(0, 1)
+                        self.current_bid = higher_possible[random_higher]
+                    else:
+                        self.current_bid = higher_possible[0]
                 else:  # there is no possible bluff
                     if (AllPossibleWorlds.index(self.current_bid) + 1) < 56:
                         self.current_bid = AllPossibleWorlds[
@@ -444,15 +483,14 @@ class Game:
 
     # Main loop that plays the game
     def play(self):
-
         while not self.end_game:
-
             if self.state == states['start']:  # first turn is different than other turns,
                 print('------------ NEW ROUND --------------')
                 print(f'[STARTING TURN] of Player {self.turn}')
                 # self.cup.roll_all()
+                self.first_turn = True # might be used in belief probability
                 self.public_knowledge.clear()
-                # self.cup.dice = [6, 6, 4]
+                # self.cup.dice = [6, 6, 2]
                 self.cup.roll_all()
 
                 print(f"[STARTING ROLL] Player {self.turn} rolls the dice and rolls:")
@@ -518,6 +556,8 @@ class Game:
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
                     if self.players[i].penalty_points == self.max_penalty:
                         print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
+                        self.players[i].losses += 1
+                        losscount[i] += 1
                         self.end_game = True
                         break
 
@@ -540,6 +580,8 @@ class Game:
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
                     if self.players[i].penalty_points == self.max_penalty:
                         print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
+                        self.players[i].losses += 1
+                        losscount[i] += 1
                         self.end_game = True
                         break
 
@@ -590,3 +632,4 @@ class Game:
                 self.state = states['believe/call_bluff_phase']
                 continue
         print('Game finished!')
+
