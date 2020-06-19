@@ -69,9 +69,10 @@ def make_jpd(options, pk):  # makes a joint probability of the possible rolls, f
     jpd = [deepcopy(options), [0] * len(options)]
     for i in range(len(jpd[0])):
         if len(pk) == 0:  # three unknown dice
-            if jpd[0][i][0] == jpd[0][i][1] == jpd[0][i][2]:  # three similar dice
+            if jpd[0][i][0] == jpd[0][i][1] == jpd[0][i][2]:  # three equal dice
                 jpd[1][i] = 1 / 216  # chance equal to (1/6)^3
-            elif jpd[0][i][0] == jpd[0][i][1] or jpd[0][i][0] == jpd[0][i][2] or jpd[0][i][1] == jpd[0][i][2]:  # two dice are the same
+            elif jpd[0][i][0] == jpd[0][i][1] or jpd[0][i][0] == jpd[0][i][2] or jpd[0][i][1] == jpd[0][i][
+                2]:  # two dice are the same
                 jpd[1][i] = 3 / 216
             else:  # all dice are different
                 jpd[1][i] = 6 / 216
@@ -91,7 +92,7 @@ def make_jpd(options, pk):  # makes a joint probability of the possible rolls, f
 
 
 class Game:
-    def __init__(self, n_players=3):
+    def __init__(self, n_players=3, print_info = True, press_to_continue = True):
         """
         Main function for initializing the game
         """
@@ -102,32 +103,33 @@ class Game:
         self.public_knowledge = []
         self.n_players = n_players
         self.cup = Cup()
-        self.turn = random.randint(0,n_players-1) # first turn is random
+        self.turn = random.randint(0, n_players - 1)  # first turn is random
         self.state = states['start']
         self.loser_name = ['H', 'O', 'R', 'S', 'E']  # TODO make is such that user can set this.
         self.max_penalty = len(self.loser_name)
         self.max_overbid = 3
-        self.believe_percentage = 80
 
-        self.press_to_continue = True
+
+        self.print_info = print_info  #
+        self.press_to_continue = press_to_continue
 
         ############# Agent strategies configuration ######################
 
-        self.players[0].roll_strategy = 'random'
-        self.players[0].bid_strategy = 'truthful'
-        self.players[0].determine_bluff_strategy = 'random'
+        # self.players[0].roll_strategy = 'random'
+        # self.players[0].bid_strategy = 'truthful'
+        # self.players[0].determine_bluff_strategy = 'random'
 
         self.players[0].roll_strategy = 'greedy'
         self.players[0].bid_strategy = 'always_overbid'
         self.players[0].determine_bluff_strategy = 'always_true'
+        #
+        # self.players[1].roll_strategy = 'random'
+        # self.players[1].bid_strategy = 'truthful'
+        # self.players[1].determine_bluff_strategy = 'random'
 
-        self.players[1].roll_strategy = 'random'
-        self.players[1].bid_strategy = 'truthful'
-        self.players[1].determine_bluff_strategy = 'random'
-
-        # self.players[1].roll_strategy = 'greedy'
-        # self.players[1].bid_strategy = 'always_overbid'
-        # self.players[1].determine_bluff_strategy = 'always_true'
+        self.players[1].roll_strategy = 'greedy'
+        self.players[1].bid_strategy = 'always_overbid'
+        self.players[1].determine_bluff_strategy = 'always_true'
 
         self.players[2].roll_strategy = 'knowledge_based'
         self.players[2].bid_strategy = 'knowledge_based'
@@ -138,16 +140,17 @@ class Game:
 
     def bid_possible(self, bid):
         if AllPossibleWorlds.index(self.current_bid) < AllPossibleWorlds.index(bid):
-            print(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
-            # self.print_dice(bid)
+            if self.print_info: print(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
+            # self.if self.print_info: print_dice(bid)
             return True
         else:
-            print(f'Truthful bid is impossible, {bid} not higher than {self.current_bid}')
+            if self.print_info: print(f'Truthful bid is impossible, {bid} not higher than {self.current_bid}')
             return False
 
     def determine_bluff(self, strategy):
         if strategy == 'random':
-            if random.randint(1, 100) > self.believe_percentage or (  # believing probability
+            believe_percentage = 80
+            if random.randint(1, 100) > believe_percentage or (  # believing probability
                     AllPossibleWorlds.index(self.current_bid) == len(AllPossibleWorlds) - 1):
                 return True
             else:
@@ -167,7 +170,7 @@ class Game:
 
                 jpd = make_jpd(self.players[self.turn].knowledge,
                                self.public_knowledge)  # make a joint probability distribution of the possible rolls
-                # print(jpd)
+                # if self.print_info: print(jpd)
                 higher_possible = [w for w in self.players[self.turn].knowledge if
                                    self.players[self.turn].knowledge.index(w) >= self.players[
                                        self.turn].knowledge.index(self.current_bid)]
@@ -178,31 +181,29 @@ class Game:
 
                 probability = 0
                 for w in higher_possible:
-                    # print(w)
+                    # if self.print_info: print(w)
                     if w in jpd[0]:
                         probability += jpd[1][jpd[0].index(w)]
 
-                print(f'Probability of rolling possible higher worlds among possible worlds: {probability}')
+                if self.print_info: print(
+                    f'Probability of rolling possible higher worlds among possible worlds: {probability}')
 
                 # add variable threshold depending on public knowledge (since belief probability depends on proportion of possible worlds, which is more variable with less pk)
                 if len(self.public_knowledge) == 2:
-                    believe_threshold = np.random.normal(3 / 12, 1/12, 1)
+                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1)
                 elif len(self.public_knowledge) == 1:
-                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1)*0.75
+                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1) * 0.75
                 else:
-                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1)*0.5
+                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1) * 0.5
 
                 # NOTE this believe threshold will always have some kind of arbitrariness, which is due to uncertainty. But this is also the case for human players
                 # Finding the correct normal distribution is quite hard.
 
-
-
-
                 if probability >= believe_threshold:
-                    print(f' {probability} >= {believe_threshold}')
+                    if self.print_info: print(f' {probability} >= {believe_threshold}')
                     return False  # not a bluff -> believe
                 else:
-                    print(f' {probability} < {believe_threshold}')
+                    if self.print_info: print(f' {probability} < {believe_threshold}')
                     return True
 
     def roll_dice(self, roll_strategy):
@@ -212,100 +213,107 @@ class Game:
 
         # roll according to strategies 'random', '1_lowest', 'random_lowest' or 'greedy'
         if roll_strategy == 'random':
-            print('[ROLL] Rolling random die')
+            if self.print_info: print('[ROLL] Rolling random die')
             randomDie = random.randint(0, 2)
-            self.cup.roll_dice_with_value(dicecopy[0][randomDie])
+            self.cup.roll_dice_with_value(dicecopy[0][randomDie],self.print_info)
             dicecopy[1][randomDie] = 1
 
         elif roll_strategy == '1_lowest':
-            print('[ROLL] Rolling 1 lowest die ')
-            self.cup.roll_dice_with_value(dicecopy[0][2])  # rolls the lowest die
+            if self.print_info: print('[ROLL] Rolling 1 lowest die ')
+            self.cup.roll_dice_with_value(dicecopy[0][2],self.print_info)  # rolls the lowest die
             dicecopy[1][2] = 1
 
         elif roll_strategy == 'random_lowest':
-            print('[ROLL] Rolling random n lowest dice')
+            if self.print_info: print('[ROLL] Rolling random n lowest dice') # rolls the n lowest dice, with n randomly determined
             random_n = random.randint(0, 2)
-            self.cup.roll_dice_with_value(dicecopy[0][2])
+            self.cup.roll_dice_with_value(dicecopy[0][2],self.print_info)
             dicecopy[1][2] = 1
             if random_n > 0:  # must be done dice by dice since reshuffle disallows a loop
-                self.cup.roll_dice_with_value(dicecopy[0][1])
+                self.cup.roll_dice_with_value(dicecopy[0][1],self.print_info)
                 dicecopy[1][1] = 1
             if random_n > 1:
-                self.cup.roll_dice_with_value(dicecopy[0][0])
+                self.cup.roll_dice_with_value(dicecopy[0][0],self.print_info)
                 dicecopy[1][0] = 1
 
         elif roll_strategy == 'greedy':  # rolls all dice that aren't 6's
-            print('[ROLL] Rolling greedy (all non-6 dice)')
+            if self.print_info: print('[ROLL] Rolling greedy (all non-6 dice)')
             if dicecopy[0][0] != 6:
-                self.cup.roll_dice_with_value(dicecopy[0][0])
+                self.cup.roll_dice_with_value(dicecopy[0][0],self.print_info)
                 dicecopy[1][0] = 1
             if dicecopy[0][1] != 6:
-                self.cup.roll_dice_with_value(dicecopy[0][1])
+                self.cup.roll_dice_with_value(dicecopy[0][1],self.print_info)
                 dicecopy[1][1] = 1
             if dicecopy[0][2] != 6:
-                self.cup.roll_dice_with_value(dicecopy[0][2])
+                self.cup.roll_dice_with_value(dicecopy[0][2],self.print_info)
                 dicecopy[1][2] = 1
 
         elif roll_strategy == 'knowledge_based':
             # Knowledge based rolling strategy
 
-            self.cup.roll_dice_with_value(dicecopy[0][2])  # always rolls the lowest die first, this always has the highest chance of getting to a higher bet
+            self.cup.roll_dice_with_value(dicecopy[0][
+                                              2],self.print_info)  # always rolls the lowest die first, this always has the highest chance of getting to a higher bet
             dicecopy[1][2] = 1
 
-            if not self.bid_possible(self.cup.dice): # if the cup is not higher than the bid, make decision whether to roll another die or bluff
-                print('First roll did not cause for a higher value than the current bid')
+            if not self.bid_possible(
+                    self.cup.dice):  # if the cup is not higher than the bid, make decision whether to roll another die or bluff
+                if self.print_info: print('First roll did not cause for a higher value than the current bid')
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 # implement small chance (1/6) of bluffing on poker in bidding round, if two dice can be displayed
-                if dicecopy[0][0] == dicecopy[0][1] and random.randint(0,1000) < 167: # first two dice are the same
+                if dicecopy[0][0] == dicecopy[0][1] and random.randint(0, 1000) < 167:  # first two dice are the same
                     self.players[self.turn].bluff_poker = True
                     self.players[self.turn].bluff_value = dicecopy[0][0]
-                    print('Two open dice are the same, bluffing for poker, since its possible')
+                    if self.print_info: print('Two open dice are the same, bluffing for poker, since its possible')
 
                 # Roll for 6s when they are not in the bid and can still be rolled
                 elif 6 not in self.current_bid:  # if there is no 6 in the current bid, another die can be rolled
-                    print('Rolling for a higher value')
-                    self.cup.roll_dice_with_value(dicecopy[0][1])
+                    if self.print_info: print('Rolling for a higher value')
+                    self.cup.roll_dice_with_value(dicecopy[0][1],self.print_info)
                     dicecopy[1][1] = 1
                     if self.press_to_continue:
                         input("Press [Enter] to continue...\n")
 
-                    if not self.bid_possible(self.cup.dice):  # if the cup is still not higher than the bid, make decision whether to roll another die
-                        print('Rolling for a higher value (2)')
-                        self.cup.roll_dice_with_value(dicecopy[0][0])
+                    if not self.bid_possible(
+                            self.cup.dice):  # if the cup is still not higher than the bid, make decision whether to roll another die
+                        if self.print_info: print('Rolling for a higher value (2)')
+                        self.cup.roll_dice_with_value(dicecopy[0][0],self.print_info)
                         dicecopy[1][0] = 1
                         if self.press_to_continue:
                             input("Press [Enter] to continue...\n")
 
-                    elif random.randint(1,100) <  50: # a higher bid is already obtained, but last dice might still be rolled to get a 6 #TODO: maybe work out probability
-                        print(f'[ROLL] Cup is already higher, but player is trying to roll {dicecopy[0][0]} to a higher value')
-                        self.cup.roll_dice_with_value(dicecopy[0][0])
+                    elif random.randint(1,
+                                        100) < 50:  # a higher bid is already obtained, but last dice might still be rolled to get a 6 #TODO: maybe work out probability
+                        if self.print_info: print(
+                            f'[ROLL] Cup is already higher, but player is trying to roll {dicecopy[0][0]} to a higher value')
+                        self.cup.roll_dice_with_value(dicecopy[0][0],self.print_info)
                         dicecopy[1][0] = 1
 
 
                 # otherwise maybe roll, or maybe bluff, depending on the value of the remaining dice
-                else: # there is at least a 6 in the bid, now there are 2 possibilities:
-                    if self.current_bid.count(6) == 1: # there is only one 6 in the bid (must be the first)
+                else:  # there is at least a 6 in the bid, now there are 2 possibilities:
+                    if self.current_bid.count(6) == 1:  # there is only one 6 in the bid (must be the first)
                         # implement a chance to roll the other dice, otherwise go to bid phase and bluff
-                        if random.randint(1,1000) > (1000 * dicecopy[0][1] / 6): # a lower dice value has a higher chance to be thrown
-                            print(f'[ROLL] Trying to roll {dicecopy[0][1]} to a higher value')
-                            self.cup.roll_dice_with_value(dicecopy[0][1])
+                        if random.randint(1, 1000) > (
+                                1000 * dicecopy[0][1] / 6):  # a lower dice value has a higher chance to be thrown
+                            if self.print_info: print(f'[ROLL] Trying to roll {dicecopy[0][1]} to a higher value')
+                            self.cup.roll_dice_with_value(dicecopy[0][1],self.print_info)
                             dicecopy[1][1] = 1
                         else:
-                            print(f'Player thinks bluffing with the dice open is less risky than to roll {dicecopy[0][1]}')
+                            if self.print_info: print(
+                                f'Player thinks bluffing with the dice open is less risky than to roll {dicecopy[0][1]}')
 
-                    elif dicecopy[0][0] == dicecopy[0][0] == 6: # otherwise both unrolled dice are 6, a bluff will be made in bidding phase on the basis of knowledge
+                    elif dicecopy[0][0] == dicecopy[0][
+                        0] == 6:  # otherwise both unrolled dice are 6, a bluff will be made in bidding phase on the basis of knowledge
                         self.players[self.turn].bluff_poker = True
                         self.players[self.turn].bluff_value = dicecopy[0][0]
 
-        # print(dicecopy)
+        # if self.print_info: print(dicecopy)
         self.public_knowledge = []
         for i in range(2):
             if dicecopy[1][i] == 0:
                 value = dicecopy[0][i]
-                # print(f'value = {value}')
+                # if self.print_info: print(f'value = {value}')
                 self.public_knowledge.append(value)
-
 
     def roll_poker(self, threshold):
         to_roll = []
@@ -313,45 +321,45 @@ class Game:
         # Poker is rolled
         if is_poker(self.cup.dice):
             if self.cup.dice[0] > threshold:
-                print('Poker beaten')
+                if self.print_info: print('Poker beaten')
                 self.penalise_poker(2)
             elif self.cup.dice[0] == threshold:
-                print('Poker equalled')
+                if self.print_info: print('Poker equalled')
                 self.penalise_poker(1)
             else:
-                print('Poker rolled, but not high enough. rolling all again.')
+                if self.print_info: print('Poker rolled, but not high enough. rolling all again.')
                 to_roll.extend([0, 1, 2])
 
         # Highest dice are equal
         elif self.cup.dice[0] == self.cup.dice[1]:
             if self.cup.dice[0] >= threshold:
-                print('Equal dice with value high enough, rolling dice 2 again.')
+                if self.print_info: print('Equal dice with value high enough, rolling dice 2 again.')
                 to_roll.append(2)
             elif self.cup.dice[2] >= threshold:
-                print('Equal dice with value NOT high enough, but lowest is. rolling 0, 1 again.')
+                if self.print_info: print('Equal dice with value NOT high enough, but lowest is. rolling 0, 1 again.')
                 to_roll.extend([0, 1])
             else:
-                print('Equal dice with value NOT high enough, rolling all again.')
+                if self.print_info: print('Equal dice with value NOT high enough, rolling all again.')
                 to_roll.extend([0, 1, 2])
 
         # Lowest dice are equal
         elif self.cup.dice[1] == self.cup.dice[2]:
             if self.cup.dice[1] >= threshold:
-                print('Equal dice with value high enough, rolling dice 0 again.')
+                if self.print_info: print('Equal dice with value high enough, rolling dice 0 again.')
                 to_roll.append(0)
             elif self.cup.dice[0] >= threshold:
-                print('Equal dice with value NOT high enough, but highest is. rolling 1, 2 again.')
+                if self.print_info: print('Equal dice with value NOT high enough, but highest is. rolling 1, 2 again.')
                 to_roll.extend([1, 2])
             else:
-                print('Equal dice with value NOT high enough, rolling all again.')
+                if self.print_info: print('Equal dice with value NOT high enough, rolling all again.')
                 to_roll.extend([0, 1, 2])
 
         # No dice are equal
         elif self.cup.dice[0] >= threshold:
-            print('Highest dice beats threshold, rolling dice 1 and dice 2 again.')
+            if self.print_info: print('Highest dice beats threshold, rolling dice 1 and dice 2 again.')
             to_roll.extend([1, 2])
         else:
-            print('No die was high enough, rolling all dice again.')
+            if self.print_info: print('No die was high enough, rolling all dice again.')
             to_roll.extend([0, 1, 2])
 
         return to_roll
@@ -361,23 +369,23 @@ class Game:
         equal = 1
         lost = 0
 
-        print(f'[PENALISE POKER] The poker was {self.current_bid} and the cup has {self.cup.dice}')
+        if self.print_info: print(f'[PENALISE POKER] The poker was {self.current_bid} and the cup has {self.cup.dice}')
         if outcome == won:
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
-            print(
+            if self.print_info: print(
                 f'Player {self.turn} has rolled a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
             self.turn = (self.turn + self.n_players - 1) % self.n_players  # previous player can start again
         elif outcome == equal:
-            print(f'Player {self.turn} has rolled the same poker! No player gets a penalty point.')
+            if self.print_info: print(f'Player {self.turn} has rolled the same poker! No player gets a penalty point.')
         elif outcome == lost:
             self.players[self.turn].penalty_points += 1
-            print(f'Player {self.turn} did not roll high enough and gets one penalty point.')
+            if self.print_info: print(f'Player {self.turn} did not roll high enough and gets one penalty point.')
 
     def bidding(self, strategy):
         if strategy == 'truthful':
             if self.bid_possible(self.cup.dice):
                 self.current_bid = copy(self.cup.dice)
-                # print('[DEBUG] copy the values')
+                # if self.print_info: print('[DEBUG] copy the values')
             else:
                 random_add = random.randint(1, self.max_overbid)
                 if (AllPossibleWorlds.index(self.current_bid) + random_add) < 56:
@@ -405,7 +413,7 @@ class Game:
             if self.bid_possible(self.cup.dice):  # bid truthful if possible
                 self.current_bid = copy(self.cup.dice)
 
-            elif self.players[self.turn].bluff_poker: # decided to bluff at rolling phase
+            elif self.players[self.turn].bluff_poker:  # decided to bluff at rolling phase
                 self.current_bid = [self.players[self.turn].bluff_value] * 3
                 self.players[self.turn].bluff_poker = False
             else:  # truthful bet impossible, look for a smart bluff
@@ -426,7 +434,7 @@ class Game:
 
                 higher_possible = [w for w in possible_bets if
                                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-                print(f'possible bluffs:{higher_possible}')
+                if self.print_info: print(f'possible bluffs:{higher_possible}')
                 if len(higher_possible) != 0:  # there is at least one higher possible world for bluffing
                     # create some randomness in bluffing
                     if len(higher_possible) > 2:
@@ -443,20 +451,20 @@ class Game:
                             AllPossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
 
     def penalise(self):
-        print(f'[PENALISE] The bid was {self.current_bid} and the cup has {self.cup.dice}')
+        if self.print_info: print(f'[PENALISE] The bid was {self.current_bid} and the cup has {self.cup.dice}')
         if AllPossibleWorlds.index(self.current_bid) > AllPossibleWorlds.index(
                 self.cup.dice):  # the bid was higher than the cup, previous player was bluffing/lying
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
-            print(
+            if self.print_info: print(
                 f'Player {self.turn} was right, Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
             self.turn = (self.turn + self.n_players - 1) % self.n_players  # previous player can start again
         else:
             self.players[self.turn].penalty_points += 1
-            print(f'Player {self.turn} was wrong and gets one penalty point')
+            if self.print_info: print(f'Player {self.turn} was wrong and gets one penalty point')
             # turn remains with this player
 
     def update_knowledge(self):
-        print(f'Open dice are: {self.public_knowledge}')
+        if self.print_info: print(f'Open dice are: {self.public_knowledge}')
         for i in range(self.n_players):
             if i == self.turn:
                 self.players[i].knowledge = [self.cup.dice]
@@ -474,28 +482,28 @@ class Game:
                         self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(
                             pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
 
-            # Printing knowledge of agents :
-            # print(
+            # if self.print_info: Printing knowledge of agents :
+            # if self.print_info: print(
             #     f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
-            # # print(self.players[i].knowledge)
+            # # if self.print_info: print(self.players[i].knowledge)
             higher_possible = [w for w in self.players[i].knowledge if
                                AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-            # print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
+            # if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
 
     # Main loop that plays the game
     def play(self):
         while not self.end_game:
             if self.state == states['start']:  # first turn is different than other turns,
-                print('------------ NEW ROUND --------------')
-                print(f'[STARTING TURN] of Player {self.turn}')
+                if self.print_info: print('------------ NEW ROUND --------------')
+                if self.print_info: print(f'[STARTING TURN] of Player {self.turn}')
                 # self.cup.roll_all()
-                self.first_turn = True # might be used in belief probability
+                self.first_turn = True  # might be used in belief probability
                 self.public_knowledge.clear()
                 # self.cup.dice = [6, 6, 2]
                 self.cup.roll_all()
 
-                print(f"[STARTING ROLL] Player {self.turn} rolls the dice and rolls:")
-                print_dice(self.cup.dice)
+                if self.print_info: print(f"[STARTING ROLL] Player {self.turn} rolls the dice and rolls:")
+                if self.print_info: print_dice(self.cup.dice)
 
                 if self.players[self.turn].bid_strategy == 'truthful':
                     self.current_bid = copy(self.cup.dice)
@@ -506,7 +514,7 @@ class Game:
 
                 self.update_knowledge()
 
-                print(f"[STARTING BID] Player {self.turn} bids: {self.current_bid}")
+                if self.print_info: print(f"[STARTING BID] Player {self.turn} bids: {self.current_bid}")
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.update_turn()
@@ -517,28 +525,29 @@ class Game:
                 threshold = self.current_bid[0]
                 to_roll = []
 
-                print(f'[POKER PHASE] Player {self.turn} has three rolls to try and equal or beat {self.current_bid}.')
+                if self.print_info: print(
+                    f'[POKER PHASE] Player {self.turn} has three rolls to try and equal or beat {self.current_bid}.')
                 self.cup.roll_all()
-                print(f'[ROLL 1] Player {self.turn} rolls the dice and rolls:')
-                print_dice(self.cup.dice)
+                if self.print_info: print(f'[ROLL 1] Player {self.turn} rolls the dice and rolls:')
+                if self.print_info: print_dice(self.cup.dice)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 to_roll = self.roll_poker(threshold)
 
-                print(f'[ROLL 2]')
+                if self.print_info: print(f'[ROLL 2]')
                 for d in to_roll:
-                    print(f'Rolling dice {d}:')
-                    self.cup.roll_dice_with_value(self.cup.dice[d])
-                print_dice(self.cup.dice)
+                    if self.print_info: print(f'Rolling dice {d}:')
+                    self.cup.roll_dice_with_value(self.cup.dice[d],self.print_info)
+                if self.print_info: print_dice(self.cup.dice)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 to_roll = self.roll_poker(threshold)
 
-                print(f'[ROLL 3]')
+                if self.print_info: print(f'[ROLL 3]')
                 for d in to_roll:
-                    print(f'Rolling dice {d}:')
-                    self.cup.roll_dice_with_value(self.cup.dice[d])
-                print_dice(self.cup.dice)
+                    if self.print_info: print(f'Rolling dice {d}:')
+                    self.cup.roll_dice_with_value(self.cup.dice[d],self.print_info)
+                if self.print_info: print_dice(self.cup.dice)
 
                 if is_poker(self.cup.dice) and self.cup.dice[0] > threshold:
                     self.penalise_poker(2)
@@ -547,16 +556,18 @@ class Game:
                 else:
                     self.penalise_poker(0)
 
-                print('[SCORE] is now as follows:', end=" ")
+                if self.print_info: print('[SCORE] is now as follows:', end=" ")
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
-                    print(f'Player {i}: {self.players[i].penalty_points} points: ', end=" ")
-                    print_string = [self.loser_name[j] for j in range(self.players[i].penalty_points)]
-                    print("".join(print_string), end=" ")
-                print()  # print for new line
+                    if self.print_info: print(f'Player {i}: {self.players[i].penalty_points} points: ', end=" ")
+                    if self.print_info: print_string = [self.loser_name[j] for j in
+                                                        range(self.players[i].penalty_points)]
+                    if self.print_info: print("".join(print_string), end=" ")
+                if self.print_info: print()  # if self.print_info: print for new line
 
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
                     if self.players[i].penalty_points == self.max_penalty:
-                        print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
+                        if self.print_info: print(
+                            f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
                         self.players[i].losses += 1
                         losscount[i] += 1
                         self.end_game = True
@@ -571,16 +582,18 @@ class Game:
             if self.state == states['penalty_phase']:
                 self.penalise()
 
-                print('[SCORE] is now as follows:', end=" ")
+                if self.print_info: print('[SCORE] is now as follows:', end=" ")
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
-                    print(f'Player {i}: {self.players[i].penalty_points} points: ', end=" ")
-                    print_string = [self.loser_name[j] for j in range(self.players[i].penalty_points)]
-                    print("".join(print_string), end=" ")
-                print()  # print for new line
+                    if self.print_info: print(f'Player {i}: {self.players[i].penalty_points} points: ', end=" ")
+                    if self.print_info: print_string = [self.loser_name[j] for j in
+                                                        range(self.players[i].penalty_points)]
+                    if self.print_info: print("".join(print_string), end=" ")
+                if self.print_info: print()  # if self.print_info: print for new line
 
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
                     if self.players[i].penalty_points == self.max_penalty:
-                        print(f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
+                        if self.print_info: print(
+                            f'Player {i} has {self.max_penalty} penalty points and has lost the game!')
                         self.players[i].losses += 1
                         losscount[i] += 1
                         self.end_game = True
@@ -595,14 +608,14 @@ class Game:
                 # ------------- These states are looped within one round --------------
 
             if self.state == states['believe/call_bluff_phase']:
-                print(f'[TURN] of Player {self.turn}')
+                if self.print_info: print(f'[TURN] of Player {self.turn}')
                 if self.determine_bluff(
                         self.players[self.turn].determine_bluff_strategy):  # if true, then agent believes it is a bluff
-                    print(
+                    if self.print_info: print(
                         f'Player {self.turn} does not believe Player {(self.turn + self.n_players - 1) % self.n_players} (i.e. {self.current_bid} is not under the cup)')
                     self.state = states['penalty_phase']
                 else:
-                    print(
+                    if self.print_info: print(
                         f'Player {self.turn} believes Player {(self.turn + self.n_players - 1) % self.n_players} (i.e. that at least {self.current_bid} is  under the cup)')
                     self.players[self.turn].knowledge = self.cup.dice
 
@@ -616,8 +629,8 @@ class Game:
 
             if self.state == states['roll_dice_phase']:
                 self.roll_dice(self.players[self.turn].roll_strategy)
-                print(f'Player {self.turn} has rolled the dice, the cup is now as follows:')
-                print_dice(self.cup.dice)
+                if self.print_info: print(f'Player {self.turn} has rolled the dice, the cup is now as follows:')
+                if self.print_info: print_dice(self.cup.dice)
                 self.update_knowledge()
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
@@ -626,11 +639,10 @@ class Game:
 
             if self.state == states['bidding_phase']:
                 self.bidding(self.players[self.turn].bid_strategy)
-                print(f'Player {self.turn} has bid: {self.current_bid}')
+                if self.print_info: print(f'Player {self.turn} has bid: {self.current_bid}')
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.update_turn()
                 self.state = states['believe/call_bluff_phase']
                 continue
-        print('Game finished!')
-
+        if self.print_info: print('Game finished!')
