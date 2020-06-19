@@ -92,7 +92,7 @@ def make_jpd(options, pk):  # makes a joint probability of the possible rolls, f
 
 
 class Game:
-    def __init__(self, n_players=3, print_info = True, press_to_continue = True):
+    def __init__(self, n_players=3, print_info = True, press_to_continue = True, mean_th = 3/12):
         """
         Main function for initializing the game
         """
@@ -108,6 +108,7 @@ class Game:
         self.loser_name = ['H', 'O', 'R', 'S', 'E']  # TODO make is such that user can set this.
         self.max_penalty = len(self.loser_name)
         self.max_overbid = 3
+        self.believe_threshold_mean = mean_th
 
 
         self.print_info = print_info  #
@@ -134,6 +135,14 @@ class Game:
         self.players[2].roll_strategy = 'knowledge_based'
         self.players[2].bid_strategy = 'knowledge_based'
         self.players[2].determine_bluff_strategy = 'knowledge_based'
+
+        # self.players[1].roll_strategy = 'knowledge_based'
+        # self.players[1].bid_strategy = 'knowledge_based'
+        # self.players[1].determine_bluff_strategy = 'knowledge_based'
+        #
+        # self.players[0].roll_strategy = 'knowledge_based'
+        # self.players[0].bid_strategy = 'knowledge_based'
+        # self.players[0].determine_bluff_strategy = 'knowledge_based'
 
     def update_turn(self):  # sets turn to the next player
         self.turn = (self.turn + 1) % self.n_players
@@ -189,12 +198,13 @@ class Game:
                     f'Probability of rolling possible higher worlds among possible worlds: {probability}')
 
                 # add variable threshold depending on public knowledge (since belief probability depends on proportion of possible worlds, which is more variable with less pk)
+
                 if len(self.public_knowledge) == 2:
-                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1)
+                    believe_threshold = np.random.normal(self.believe_threshold_mean, 1 / 12, 1)
                 elif len(self.public_knowledge) == 1:
-                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1) * 0.75
+                    believe_threshold = np.random.normal(self.believe_threshold_mean, 1 / 12, 1) * 0.75
                 else:
-                    believe_threshold = np.random.normal(3 / 12, 1 / 12, 1) * 0.5
+                    believe_threshold = np.random.normal(self.believe_threshold_mean, 1 / 12, 1) * 0.5
 
                 # NOTE this believe threshold will always have some kind of arbitrariness, which is due to uncertainty. But this is also the case for human players
                 # Finding the correct normal distribution is quite hard.
