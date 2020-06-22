@@ -3,7 +3,7 @@ from player import Player
 from cup import Cup
 import numpy as np
 import time
-
+from visualize_dice import Visualized_game
 
 
 
@@ -32,39 +32,41 @@ def main():
 
 
 
-    ################    Loop for testing many games, no prints or press to continue     ####################################
+
     # meanchecks = np.arange(10/120, 60/120, 1/120) #tested performance for different mean believe thresholds
     # for mean in meanchecks:
     # print(f'Mean = {round(mean,3)}')
-    n_test_games = 1000
-    i = 0
-    t0 = time.time()
-    print(f'Playing {n_test_games} games for testing')
-    while i < n_test_games:
-        game = Game(n_players=3, print_info = False, press_to_continue = False)
-        game.play()
-        i += 1
-    print(f' Player 1 losses:{losscount[0]}, Player 2 losses:{losscount[1]}, Player 3 losses:{losscount[2]}')
 
-    print(f'Computing time: {time.time()-t0}')
+    ###############    Loop for testing many games, no prints or press to continue     ####################################
+    # n_test_games = 1000
+    # i = 0
+    # t0 = time.time()
+    # print(f'Playing {n_test_games} games for testing')
+    # while i < n_test_games:
+    #     game = Game(n_players=3, print_info = False, press_to_continue = False, visualise_game_gui=False)
+    #     game.play()
+    #     i += 1
+    # print(f' Player 1 losses:{losscount[0]}, Player 2 losses:{losscount[1]}, Player 3 losses:{losscount[2]}')
+    #
+    # print(f'Computing time: {time.time()-t0}')
 
 
     ################    Loop for testing individual games, with info and press to continue     ####################################
-    # while new_game:  #
-    #     game = Game()
-    #     game.play()
-    #     # i += 1
-    #     another_game = input("Another game? [y/n]")
-    #     while another_game != 'y' and another_game != 'n':
-    #         another_game = input("Please try again: Another game? [y/n]")
-    #
-    #     if another_game == 'n':
-    #         new_game = False
-    #         print('Goodbye!')
-    #
-    #     if another_game == 'y':
-    #         print('Starting new game!')
-    #         continue
+    while new_game:  #
+        game = Game()
+        game.play()
+        # i += 1
+        another_game = input("Another game? [y/n]")
+        while another_game != 'y' and another_game != 'n':
+            another_game = input("Please try again: Another game? [y/n]")
+
+        if another_game == 'n':
+            new_game = False
+            print('Goodbye!')
+
+        if another_game == 'y':
+            print('Starting new game!')
+            continue
 
 
 if __name__ == '__main__':
