@@ -32,12 +32,10 @@ def main():
 
 
 
-
+    ################    Loop for testing many games, no prints or press to continue     ####################################
     # meanchecks = np.arange(10/120, 60/120, 1/120) #tested performance for different mean believe thresholds
     # for mean in meanchecks:
     # print(f'Mean = {round(mean,3)}')
-
-    ###############    Loop for testing many games, no prints or press to continue     ####################################
     # n_test_games = 1000
     # i = 0
     # t0 = time.time()
@@ -110,5 +108,6 @@ if __name__ == '__main__':
     # worlds = [s for s in AllPossibleWorlds if 1 in s and 5 in s and (6 in s or 5 in s or 4 in s)]
     # # example when 2 dice are open and one known is under the cup, drawn from (6,4,4)
     # worlds = [s for s in AllPossibleWorlds if 1 in s and 5 in s and (6 in s or 4 in s)]
+
 
     # print(f'# worlds : {len(worlds)}: {worlds}')

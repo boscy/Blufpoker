@@ -45,6 +45,7 @@ class Visualized_game:
         # self.myCanvas.place(x=50,y=0)
         #
 
+
         game_info_string = "Game information: \n" + printtext
         print_gui = self.myCanvas2.create_text(10, 10, anchor="nw")
         self.myCanvas2.itemconfig(print_gui, text=game_info_string)
@@ -224,3 +225,4 @@ class Visualized_game:
 if __name__ == '__main__':
     for turn in range(3):
         pass
+
