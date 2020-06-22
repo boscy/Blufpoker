@@ -36,7 +36,10 @@ class Cup:
             if print_values: print(f'Rolled die with value {value} to {new_roll}')
             self.dice.append(new_roll)
             self.dice.sort(reverse=True)
+            return str(f'rolled die with value {value} to {new_roll}')
         else:
-            print(f"there is no die of value {value} in the cup")
+            if print_values: print(f"there is no die of value {value} in the cup")
+            return str(f"there is no die of value {value} in the cup")
 
-    # TODO add rolling one or two die, add which dice are visible and not
+
+
