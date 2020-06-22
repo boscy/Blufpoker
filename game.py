@@ -1,5 +1,6 @@
 from player import Player
 from cup import Cup
+from visual import Visual
 from copy import copy, deepcopy
 import random
 import numpy as np
@@ -106,6 +107,7 @@ class Game:
         self.max_overbid = 3
         self.believe_percentage = 80
 
+        self.v = Visual()
         self.press_to_continue = True
 
         # Agent strategies, TODO set all parameters from a config file
