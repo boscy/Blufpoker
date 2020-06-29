@@ -2,7 +2,6 @@ from tkinter import *
 from PIL import ImageTk, Image
 import itertools
 import random
-import cv2
 import numpy as np
 import os
 from copy import copy, deepcopy
