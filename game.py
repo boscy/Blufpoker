@@ -685,15 +685,6 @@ class Game:
                     else:
                         self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(
                             pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
-<<<<<<< HEAD
-            # if self.print_info: Printing knowledge of agents :
-            # if self.print_info: print(
-            #     f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
-            # # if self.print_info: print(self.players[i].knowledge)
-            higher_possible = [w for w in self.players[i].knowledge if
-                               AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-            # if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
-=======
 
 
             # Printing knowledge of agents :
@@ -703,7 +694,6 @@ class Game:
             higher_possible = [w for w in self.players[i].knowledge if
                                AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
             if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}\n')
->>>>>>> b1e6d406ba9027e0c6e030307a9181fa458f3faa
 
     # Main loop that plays the game
     def play(self):
@@ -711,11 +701,7 @@ class Game:
             # start_visuals()
             if self.state == states['start']:  # first turn is different than other turns,
                 if self.print_info: print('------------ NEW ROUND --------------')
-<<<<<<< HEAD
-                if self.print_info: print(f'[STARTING TURN] of Player {self.turn}')
-=======
                 if self.print_info: print(f'[STARTING TURN] of Player {self.turn + 1}')
->>>>>>> b1e6d406ba9027e0c6e030307a9181fa458f3faa
                 self.gui_print = ''
                 self.gui_print += f'[STARTING TURN] of Player {self.turn + 1}'
 
@@ -723,19 +709,11 @@ class Game:
                 # self.cup.roll_all()
                 self.first_turn = True  # might be used in belief probability
                 self.public_knowledge.clear()
-<<<<<<< HEAD
-                self.cup.dice = [2, 2, 2]
-                # self.cup.roll_all()
-
-                self.gui_print += f"\n[STARTING ROLL] Player {self.turn + 1} rolls the dice and rolls {self.cup.dice}"
-                print(self.gui_print)
-=======
                 # self.cup.dice = [2, 2, 2]
                 self.cup.roll_all()
 
                 self.gui_print += f"\n[STARTING ROLL] Player {self.turn + 1} rolls the dice and rolls {self.cup.dice}"
                 # print(self.gui_print)
->>>>>>> b1e6d406ba9027e0c6e030307a9181fa458f3faa
                 if self.print_info: print(f"[STARTING ROLL] Player {self.turn + 1} rolls the dice and rolls:")
                 if self.print_info: print_dice(self.cup.dice)
 
