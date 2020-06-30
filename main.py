@@ -109,4 +109,5 @@ if __name__ == '__main__':
     # # example when 2 dice are open and one known is under the cup, drawn from (6,4,4)
     # worlds = [s for s in AllPossibleWorlds if 1 in s and 5 in s and (6 in s or 4 in s)]
 
+
     # print(f'# worlds : {len(worlds)}: {worlds}')

@@ -2,7 +2,6 @@ from tkinter import *
 from PIL import ImageTk, Image
 import itertools
 import random
-import cv2
 import numpy as np
 import os
 from copy import copy, deepcopy
@@ -31,14 +30,14 @@ class Visualized_game:
         :param n_dice: Number of dice the cup is initialized with.
         """
         self.root = Tk()
-        self.root.geometry("1080x730")
+        self.root.geometry("1200x750")
         self.root.title('Blufpoker')
         # self.root.configure(bg=background_color)
 
-        self.myCanvas3 = Canvas(self.root, width=1080, height=180, bg="#FFFFFF")
+        self.myCanvas3 = Canvas(self.root, width=1200, height=180, bg="#FFFFFF")
         self.myCanvas3.pack(side="bottom", fill="both", expand=True)
 
-        self.myCanvas2 = Canvas(self.root, width=360, height=540, bg="#DCDCDC")
+        self.myCanvas2 = Canvas(self.root, width=480, height=540, bg="#DCDCDC")
         self.myCanvas2.pack(side=RIGHT, fill=X)
 
         self.myCanvas = Canvas(self.root, width=720, height=540, bg=background_color)
@@ -47,8 +46,9 @@ class Visualized_game:
         #
 
 
+        game_info_string = "Game information: \n" + printtext
         print_gui = self.myCanvas2.create_text(10, 10, anchor="nw")
-        self.myCanvas2.itemconfig(print_gui, text=printtext)
+        self.myCanvas2.itemconfig(print_gui, text=game_info_string)
         self.myCanvas2.insert(print_gui, 6, "")
 
 
@@ -171,7 +171,7 @@ class Visualized_game:
 
 
         if len(know1) == 56:
-            string1 = "Player 1 possible worlds: \n all worlds"
+            string1 = "Player 1 possible worlds: \nAll worlds"
         else:
             string1 = "Player 1 possible worlds: \n" + ' '.join(str(e) for e in list(know1))
 
@@ -180,7 +180,7 @@ class Visualized_game:
         self.myCanvas3.insert(texttest, 6, "")
 
         if len(know2) == 56:
-            string2 = "Player 2 possible worlds: \n all worlds"
+            string2 = "Player 2 possible worlds: \nAll worlds"
         else:
             string2 = "Player 2 possible worlds: \n" + ' '.join(str(e) for e in list(know2))
 
@@ -189,7 +189,7 @@ class Visualized_game:
         self.myCanvas3.insert(texttest2, 6, "")
 
         if len(know3) == 56:
-            string3 = "Player 3 possible worlds: \n all worlds"
+            string3 = "Player 3 possible worlds: \nAll worlds"
         else:
             string3 = "Player 3 possible worlds: \n" + ' '.join(str(e) for e in list(know3))
 
@@ -224,4 +224,5 @@ class Visualized_game:
 
 if __name__ == '__main__':
     for turn in range(3):
-        visualise_dice(turn=turn)
+        pass
+
