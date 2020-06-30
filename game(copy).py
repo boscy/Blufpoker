@@ -321,7 +321,7 @@ class Game:
 
         # if self.print_info: print(dicecopy)
         self.public_knowledge = []
-        for i in range(2):
+        for i in range(3):
             if dicecopy[1][i] == 0:
                 value = dicecopy[0][i]
                 # if self.print_info: print(f'value = {value}')
@@ -494,13 +494,13 @@ class Game:
                         self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(
                             pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
 
-            # if self.print_info: Printing knowledge of agents :
-            # if self.print_info: print(
-            #     f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
-            # # if self.print_info: print(self.players[i].knowledge)
+
+            if self.print_info: print(
+                f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
+            # if self.print_info: print(self.players[i].knowledge)
             higher_possible = [w for w in self.players[i].knowledge if
                                AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-            # if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}')
+            if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}\n')
 
     # Main loop that plays the game
     def play(self):
