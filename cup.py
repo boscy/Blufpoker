@@ -42,4 +42,3 @@ class Cup:
             return str(f"there is no die of value {value} in the cup")
 
 
-
