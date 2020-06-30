@@ -119,33 +119,26 @@ class Game:
 
         ############# Agent strategies configuration ######################
 
-        self.players[0].roll_strategy = 'random'
-        self.players[0].bid_strategy = 'truthful'
-        self.players[0].determine_bluff_strategy = 'random'
+        # self.players[1].roll_strategy = 'random'
+        # self.players[1].bid_strategy = 'truthful'
+        # self.players[1].determine_bluff_strategy = 'random'
 
         # self.players[0].roll_strategy = 'random_lowest'
         # self.players[0].bid_strategy = 'truthful'
         # self.players[0].determine_bluff_strategy = 'always_true'
 
-        # self.players[1].roll_strategy = 'random'
-        # self.players[1].bid_strategy = 'truthful'
-        # self.players[1].determine_bluff_strategy = 'random'
-
-        self.players[1].roll_strategy = '1_lowest'
-        self.players[1].bid_strategy = 'always_overbid'
+        self.players[1].roll_strategy = 'greedy'
+        self.players[1].bid_strategy = 'truthful'
         self.players[1].determine_bluff_strategy = 'always_true'
+
+        self.players[0].roll_strategy = '1_lowest'
+        self.players[0].bid_strategy = 'always_overbid'
+        self.players[0].determine_bluff_strategy = 'always_true'
 
         self.players[2].roll_strategy = 'knowledge_based'
         self.players[2].bid_strategy = 'knowledge_based'
         self.players[2].determine_bluff_strategy = 'knowledge_based'
 
-        # self.players[1].roll_strategy = 'knowledge_based'
-        # self.players[1].bid_strategy = 'knowledge_based'
-        # self.players[1].determine_bluff_strategy = 'knowledge_based'
-        #
-        # self.players[0].roll_strategy = 'knowledge_based'
-        # self.players[0].bid_strategy = 'knowledge_based'
-        # self.players[0].determine_bluff_strategy = 'knowledge_based'
 
     def update_turn(self):  # sets turn to the next player
         self.turn = (self.turn + 1) % self.n_players

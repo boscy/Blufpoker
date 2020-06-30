@@ -118,13 +118,13 @@ class Game:
 
         ############# Agent strategies configuration ######################
 
-        # self.players[0].roll_strategy = 'random'
-        # self.players[0].bid_strategy = 'truthful'
-        # self.players[0].determine_bluff_strategy = 'random'
+        self.players[0].roll_strategy = 'random'
+        self.players[0].bid_strategy = 'truthful'
+        self.players[0].determine_bluff_strategy = 'random'
 
-        self.players[0].roll_strategy = 'greedy'
-        self.players[0].bid_strategy = 'always_overbid'
-        self.players[0].determine_bluff_strategy = 'always_true'
+        # self.players[0].roll_strategy = 'greedy'
+        # self.players[0].bid_strategy = 'always_overbid'
+        # self.players[0].determine_bluff_strategy = 'always_true'
         #
         # self.players[1].roll_strategy = 'random'
         # self.players[1].bid_strategy = 'truthful'
