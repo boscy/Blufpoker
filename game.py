@@ -1,6 +1,7 @@
 from tkinter import *
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib import colors
 import random
 import numpy as np
 import seaborn as sns
@@ -178,7 +179,13 @@ class Game:
     def writeInfo(self, string):
         self.gui.gi_text.insert("1.0", string + "\n")
 
-    def writeKnowledge(self, pw, hW, cb):
+    def writeKnowledge(self, pw, cb):
+        
+        hW = [w for w in pw if AllPossibleWorlds.index(w) >= AllPossibleWorlds.index(self.current_bid)]
+        if pw == hW:
+            c = colors.ListedColormap([ 'green', 'silver'])
+        else:
+            c = colors.ListedColormap([ 'green', 'silver' ,'red'])
 
         plt.close('all')
         self.gui.chart.get_tk_widget().pack_forget()
@@ -201,9 +208,7 @@ class Game:
                     if self.gui.labels[y][x] == str(val):
                         data[y][x] = -1
 
-        print(data)
-
-        ax = sns.heatmap(data, annot=self.gui.labels, fmt='',xticklabels=False, yticklabels=False, cmap=self.gui.hm_colours, cbar= False, linewidths=1, linecolor='white')
+        ax = sns.heatmap(data, annot=self.gui.labels, fmt='',xticklabels=False, yticklabels=False, cmap=c, cbar= False, linewidths=1, linecolor='white')
         fig.add_subplot(ax)
 
         self.gui.chart = FigureCanvasTkAgg(fig, self.gui.knowledge)
@@ -213,13 +218,13 @@ class Game:
         title.place(relx = 0.25, rely = 0.025)
 
         lbl1 = Label(self.gui.knowledge, text= "  Possible worlds higher or equal than current bid  ", bg='green', pady = 2, fg='white')
-        lbl1.place(rely = 0.59, relx = 0.125)
+        lbl1.place(rely = 0.59, relx = 0.05)
 
         lbl2 = Label(self.gui.knowledge, text= "  Possible worlds lower than current bid  ", bg = 'red', pady = 2, fg='white')
-        lbl2.place(rely = 0.63, relx = 0.125)
+        lbl2.place(rely = 0.63, relx = 0.05)
 
         lbl3 = Label(self.gui.knowledge, text= "    Impossible worlds    ", bg= 'silver', pady = 2)
-        lbl3.place(rely = 0.67, relx = 0.125)
+        lbl3.place(rely = 0.67, relx = 0.05)
 
     def drawDice(self, d):
         d1 = d[0]-1
@@ -265,8 +270,8 @@ class Game:
         self.gui.chart.get_tk_widget().pack_forget()
         fig = plt.figure()
         data = np.zeros((7,8))
-
-        ax = sns.heatmap(data, annot=self.gui.labels, fmt='',xticklabels=False, yticklabels=False, cmap=self.gui.hm_colours, cbar= False, linewidths=1, linecolor='white')
+        c = colors.ListedColormap([ 'white'])
+        ax = sns.heatmap(data, annot=self.gui.labels, fmt='',xticklabels=False, yticklabels=False, cmap=c, cbar= False, linewidths=1, linecolor='grey')
         fig.add_subplot(ax)
 
         self.gui.chart = FigureCanvasTkAgg(fig, self.gui.knowledge)
@@ -275,14 +280,14 @@ class Game:
         title = Label(self.gui.knowledge, text= "  Player 3 knowledge base  ")
         title.place(relx = 0.25, rely = 0.025)
 
-        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds >= current bid  ", bg='green', pady = 2, fg='white')
-        lbl1.place(rely = 0.59, relx = 0.125)
+        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds higher or equal than current bid  ", bg='green', pady = 2, fg='white')
+        lbl1.place(rely = 0.59, relx = 0.05)
 
-        lbl2 = Label(self.gui.knowledge, text= "  Possible worlds < current bid  ", bg = 'red', pady = 2, fg='white')
-        lbl2.place(rely = 0.63, relx = 0.125)
+        lbl2 = Label(self.gui.knowledge, text= "  Possible worlds lower than current bid  ", bg = 'red', pady = 2, fg='white')
+        lbl2.place(rely = 0.63, relx = 0.05)
 
         lbl3 = Label(self.gui.knowledge, text= "    Impossible worlds    ", bg= 'silver', pady = 2)
-        lbl3.place(rely = 0.67, relx = 0.125)
+        lbl3.place(rely = 0.67, relx = 0.05)
 
     ##-----------------------------------------------------------------##
 
@@ -583,7 +588,11 @@ class Game:
         elif outcome == lost:
             self.players[self.turn].penalty_points += 1
             if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} did not roll high enough and gets one penalty point.')
-        if self.visualize_gui: self.removeDice()
+        
+        for i in range(self.n_players):
+            penalty = self.loser_name[:self.players[i].penalty_points]
+            if self.visualize_gui: self.writePenalty(i, penalty)
+        # if self.visualize_gui: self.removeDice()
 
     def bidding(self, strategy):
         if strategy == 'truthful':
@@ -667,7 +676,7 @@ class Game:
             self.players[self.turn].penalty_points += 1
             if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} was wrong and gets one penalty point')
             # turn remains with this player
-        if self.visualize_gui: self.removeDice()
+        # if self.visualize_gui: self.removeDice()
 
     def update_knowledge(self):
         if self.print_info: print(f'Open dice are: {self.public_knowledge}')
@@ -694,7 +703,7 @@ class Game:
                             pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
                 higher_possible = [w for w in self.players[i].knowledge if
                                AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]            
-                if self.visualize_gui: self.writeKnowledge(self.players[i].knowledge, higher_possible, self.current_bid)
+                if self.visualize_gui: self.writeKnowledge(self.players[i].knowledge, self.current_bid)
 
             
             if self.print_info: print(
@@ -712,11 +721,12 @@ class Game:
 
         while not self.end_game:
             if self.state == states['start']:  # first turn is different than other turns,
+                if self.visualize_gui: self.moveDiceBox(self.turn)
+                if self.visualize_gui: self.removeDice()
                 if self.visualize_gui: self.writeInfo('------------ NEW ROUND --------------')
                 if self.visualize_gui: self.writeInfo(f'[STARTING TURN] of Player {self.turn +1}')
-                if self.visualize_gui: self.removeDice()
                 if self.visualize_gui: self.clearKnowledge()
-                if self.visualize_gui: self.moveDiceBox(self.turn)
+                
                 # self.cup.roll_all()
                 self.first_turn = True  # might be used in belief probability
                 self.public_knowledge.clear()
@@ -751,7 +761,7 @@ class Game:
             if self.state == states['poker_phase']:
                 threshold = self.current_bid[0]
                 to_roll = []
-
+                if self.visualize_gui: self.clearKnowledge()
                 if self.visualize_gui: self.writeInfo(
                     f'[POKER PHASE] Player {self.turn +1} has three rolls to try and equal or beat {self.current_bid}.')
                 if self.press_to_continue:
@@ -887,7 +897,7 @@ class Game:
             if self.state == states['bidding_phase']:
                 self.bidding(self.players[self.turn].bid_strategy)
                 if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has bid: {self.current_bid}')
-                # if self.visualize_gui: self.update_knowledge()
+                if self.visualize_gui: self.update_knowledge()
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.update_turn()
