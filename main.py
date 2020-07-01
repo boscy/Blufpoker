@@ -53,8 +53,8 @@ def main():
 
     ################    Loop for testing individual games, with info and press to continue     ####################################
     while new_game:  #
-        print("GUI is controlled by pressing [Enter] in the terminal.")
-        input("Press [Enter] to start game.")
+        print("\nGUI is controlled by pressing [Enter] in the terminal.\n")
+        input("Press [Enter] to start game.\n")
         game = Game()
         game.play()
         # i += 1

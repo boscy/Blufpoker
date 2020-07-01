@@ -6,8 +6,7 @@ import numpy as np
 
 import seaborn as sns
 from matplotlib import colors
-# from matplotlib.figure import Figure
-# sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'lightgrey'})
+
 WIDTH = 1200
 HEIGHT = 750
 
@@ -75,9 +74,6 @@ class GUI(Tk):
 def initGame(self):
     self.game.place(relwidth=0.7, relheight=0.8)
 
-    # button = Button(self.game, text= "Moi", bg='green', fg='red', command= lambda: buttonclick(self))
-    # button.place(rely=0.5, relx = 0.5)
-
     self.currentBid = Button(self.game, text="Current bid: ")
     self.currentBid.place(relx = 0.4, rely = 0.5)
 
@@ -122,7 +118,6 @@ def initKnowl(self):
 
     fig = plt.figure()
 
-    # data = np.random.rand(7,8)
     data = np.ones((7,8))
     ax = sns.heatmap(data, annot=self.labels, fmt='',xticklabels=False, yticklabels=False, cmap=hm_colours, cbar= False, linewidths=1, linecolor='white')
     fig.add_subplot(ax)
@@ -133,7 +128,7 @@ def initKnowl(self):
     title = Label(self.knowledge, text= "  Player 3 knowledge base  ")
     title.place(relx = 0.25, rely = 0.025)
 
-    lbl1 = Label(self.knowledge, text= "  Possible worlds > current bid  ", bg='green', pady = 2, fg='white')
+    lbl1 = Label(self.knowledge, text= "  Possible worlds >= current bid  ", bg='green', pady = 2, fg='white')
     lbl1.place(rely = 0.59, relx = 0.125)
 
     lbl2 = Label(self.knowledge, text= "  Possible worlds < current bid  ", bg = 'red', pady = 2, fg='white')

@@ -191,6 +191,8 @@ class Game:
                 for x in range(8):
                     if self.gui.labels[y][x] == str(val):
                         data[y][x] = 1
+                        if world == cb:
+                            data[y][x] = -1
 
         for world in hW:
             val = (world[0]*100)+(world[1]*10)+world[2]
@@ -198,6 +200,8 @@ class Game:
                 for x in range(8):
                     if self.gui.labels[y][x] == str(val):
                         data[y][x] = -1
+
+        print(data)
 
         ax = sns.heatmap(data, annot=self.gui.labels, fmt='',xticklabels=False, yticklabels=False, cmap=self.gui.hm_colours, cbar= False, linewidths=1, linecolor='white')
         fig.add_subplot(ax)
@@ -208,7 +212,7 @@ class Game:
         title = Label(self.gui.knowledge, text= "  Player 3 knowledge base  ")
         title.place(relx = 0.25, rely = 0.025)
 
-        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds > current bid  ", bg='green', pady = 2, fg='white')
+        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds >= current bid  ", bg='green', pady = 2, fg='white')
         lbl1.place(rely = 0.59, relx = 0.125)
 
         lbl2 = Label(self.gui.knowledge, text= "  Possible worlds < current bid  ", bg = 'red', pady = 2, fg='white')
@@ -256,6 +260,29 @@ class Game:
             self.gui.openDie2 = Label(self.gui.knowledge, image = self.gui.dice[pk[1]-1])
             self.gui.openDie2.place(relx = 0.25, rely = 0.9)
 
+    def clearKnowledge(self):
+        plt.close('all')
+        self.gui.chart.get_tk_widget().pack_forget()
+        fig = plt.figure()
+        data = np.zeros((7,8))
+
+        ax = sns.heatmap(data, annot=self.gui.labels, fmt='',xticklabels=False, yticklabels=False, cmap=self.gui.hm_colours, cbar= False, linewidths=1, linecolor='white')
+        fig.add_subplot(ax)
+
+        self.gui.chart = FigureCanvasTkAgg(fig, self.gui.knowledge)
+        self.gui.chart.get_tk_widget().pack(anchor=N)
+
+        title = Label(self.gui.knowledge, text= "  Player 3 knowledge base  ")
+        title.place(relx = 0.25, rely = 0.025)
+
+        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds >= current bid  ", bg='green', pady = 2, fg='white')
+        lbl1.place(rely = 0.59, relx = 0.125)
+
+        lbl2 = Label(self.gui.knowledge, text= "  Possible worlds < current bid  ", bg = 'red', pady = 2, fg='white')
+        lbl2.place(rely = 0.63, relx = 0.125)
+
+        lbl3 = Label(self.gui.knowledge, text= "    Impossible worlds    ", bg= 'silver', pady = 2)
+        lbl3.place(rely = 0.67, relx = 0.125)
 
     ##-----------------------------------------------------------------##
 
@@ -458,10 +485,7 @@ class Game:
 
     def roll_poker(self, threshold):
         to_roll = []
-        pokers = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
-        hW = [p for p in pokers if p > self.cup.dice]
 
-        if self.visualize_gui: self.writeKnowledge(pokers, hW, self.cup.dice)
         # Poker is rolled
         if is_poker(self.cup.dice):
             if self.cup.dice[0] > threshold:
@@ -524,6 +548,7 @@ class Game:
         elif outcome == lost:
             self.players[self.turn].penalty_points += 1
             if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} did not roll high enough and gets one penalty point.')
+        if self.visualize_gui: self.removeDice()
 
     def bidding(self, strategy):
         if strategy == 'truthful':
@@ -607,6 +632,7 @@ class Game:
             self.players[self.turn].penalty_points += 1
             if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} was wrong and gets one penalty point')
             # turn remains with this player
+        if self.visualize_gui: self.removeDice()
 
     def update_knowledge(self):
         if self.print_info: print(f'Open dice are: {self.public_knowledge}')
@@ -653,6 +679,7 @@ class Game:
                 if self.visualize_gui: self.writeInfo('------------ NEW ROUND --------------')
                 if self.visualize_gui: self.writeInfo(f'[STARTING TURN] of Player {self.turn +1}')
                 if self.visualize_gui: self.removeDice()
+                if self.visualize_gui: self.clearKnowledge()
                 if self.visualize_gui: self.moveDiceBox(self.turn)
                 # self.cup.roll_all()
                 self.first_turn = True  # might be used in belief probability
@@ -818,7 +845,7 @@ class Game:
             if self.state == states['bidding_phase']:
                 self.bidding(self.players[self.turn].bid_strategy)
                 if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has bid: {self.current_bid}')
-                if self.visualize_gui: self.update_knowledge()
+                # if self.visualize_gui: self.update_knowledge()
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.update_turn()
