@@ -143,7 +143,7 @@ class Game:
         # self.players[1].determine_bluff_strategy = 'random'
 
         self.players[1].roll_strategy = 'greedy'
-        self.players[1].bid_strategy = 'always_overbid'
+        self.players[1].bid_strategy = 'truthful'
         self.players[1].determine_bluff_strategy = 'always_true'
 
         self.players[2].roll_strategy = 'knowledge_based'
@@ -212,10 +212,10 @@ class Game:
         title = Label(self.gui.knowledge, text= "  Player 3 knowledge base  ")
         title.place(relx = 0.25, rely = 0.025)
 
-        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds >= current bid  ", bg='green', pady = 2, fg='white')
+        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds higher or equal than current bid  ", bg='green', pady = 2, fg='white')
         lbl1.place(rely = 0.59, relx = 0.125)
 
-        lbl2 = Label(self.gui.knowledge, text= "  Possible worlds < current bid  ", bg = 'red', pady = 2, fg='white')
+        lbl2 = Label(self.gui.knowledge, text= "  Possible worlds lower than current bid  ", bg = 'red', pady = 2, fg='white')
         lbl2.place(rely = 0.63, relx = 0.125)
 
         lbl3 = Label(self.gui.knowledge, text= "    Impossible worlds    ", bg= 'silver', pady = 2)
@@ -291,9 +291,10 @@ class Game:
         if self.visualize_gui: self.moveDiceBox(self.turn)
         
 
-    def bid_possible(self, bid):
+    def bid_possible(self, bid,prints=True):
         if AllPossibleWorlds.index(self.current_bid) < AllPossibleWorlds.index(bid):
-            if self.visualize_gui: self.writeInfo(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
+            if prints:
+                if self.visualize_gui: self.writeInfo(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
             # self.if self.print_info: print_dice(bid)
             return True
         else:
@@ -309,11 +310,11 @@ class Game:
             else:
                 return False
 
-        elif strategy == 'always_true':
-            return True
+        elif strategy == 'always_believe':
+            return False #never call bluff
 
-        elif strategy == 'always_false':
-            return False
+        elif strategy == 'never_believe':
+            return True #always call bluff
 
         elif strategy == 'knowledge_based':
             if self.current_bid not in self.players[self.turn].knowledge:
@@ -357,11 +358,11 @@ class Game:
 
                 if probability >= believe_threshold:
                     if self.print_info: print(f' {probability} >= {believe_threshold}')
-                    if self.visualize_gui: self.writeInfo(f'Probability: {round(probability, 2)} >= Threshold: {round(believe_threshold[0], 2)}')
+                    if self.visualize_gui: self.writeInfo(f'Probability of bid: {round(probability, 2)} >= Believe Threshold: {round(believe_threshold[0], 2)}')
                     return False  # not a bluff -> believe
                 else:
                     if self.print_info: print(f' {probability} < {believe_threshold}')
-                    if self.visualize_gui: self.writeInfo(f'Probability: {round(probability, 2)} < Threshold: {round(believe_threshold[0], 2)}')
+                    if self.visualize_gui: self.writeInfo(f'Probability of bid: {round(probability, 2)} < Believe Threshold: {round(believe_threshold[0], 2)}')
                     return True
 
     def roll_dice(self, roll_strategy):
@@ -373,48 +374,75 @@ class Game:
         if roll_strategy == 'random':
             if self.visualize_gui: self.writeInfo('[ROLL] Rolling random die')
             randomDie = random.randint(0, 2)
-            self.cup.roll_dice_with_value(dicecopy[0][randomDie],self.visualize_gui)
+            rollprint = self.cup.roll_dice_with_value(dicecopy[0][randomDie],self.visualize_gui)
+            if self.visualize_gui: self.writeInfo(rollprint)
+            if self.press_to_continue:
+                input("Press [Enter] to continue...\n")
             dicecopy[1][randomDie] = 1
             
 
         elif roll_strategy == '1_lowest':
             if self.visualize_gui: self.writeInfo('[ROLL] Rolling 1 lowest die ')
-            self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)  # rolls the lowest die
+            rollprint = self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)  # rolls the lowest die
+            if self.visualize_gui: self.writeInfo(rollprint)
+            if self.press_to_continue:
+                input("Press [Enter] to continue...\n")
             dicecopy[1][2] = 1
 
         elif roll_strategy == 'random_lowest':
             if self.visualize_gui: self.writeInfo('[ROLL] Rolling random n lowest dice') # rolls the n lowest dice, with n randomly determined
             random_n = random.randint(0, 2)
-            self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)
+            rollprint = self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)
+            if self.visualize_gui: self.writeInfo(rollprint)
+            if self.press_to_continue:
+                input("Press [Enter] to continue...\n")
             dicecopy[1][2] = 1
             if random_n > 0:  # must be done dice by dice since reshuffle disallows a loop
-                self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
+                rollprint = self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
+                if self.visualize_gui: self.writeInfo(rollprint)
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 dicecopy[1][1] = 1
             if random_n > 1:
-                self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
+                rollprint = self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
+                if self.visualize_gui: self.writeInfo(rollprint)
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 dicecopy[1][0] = 1
 
         elif roll_strategy == 'greedy':  # rolls all dice that aren't 6's
-            if self.visualize_gui: self.writeInfo('[ROLL] Rolling greedy (all non-6 dice)')
-            if dicecopy[0][0] != 6:
-                self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
-                dicecopy[1][0] = 1
-            if dicecopy[0][1] != 6:
-                self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
-                dicecopy[1][1] = 1
-            if dicecopy[0][2] != 6:
-                self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)
-                dicecopy[1][2] = 1
+            if dicecopy[0][0] ==  dicecopy[0][1] == dicecopy[0][2] == 6: #all dice are 6s, roll the lowest
+                rollprint = self.cup.roll_dice_with_value(dicecopy[0][0], self.visualize_gui)
+                if self.visualize_gui: self.writeInfo(rollprint)
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
+            else:
+                if self.visualize_gui: self.writeInfo('[ROLL] Rolling greedy (all non-6 dice)')
+                if dicecopy[0][0] != 6:
+                    rollprint = self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
+                    if self.visualize_gui: self.writeInfo(rollprint)
+                    dicecopy[1][0] = 1
+                if dicecopy[0][1] != 6:
+                    rollprint = self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
+
+                    if self.visualize_gui: self.writeInfo(rollprint)
+                    dicecopy[1][1] = 1
+                if dicecopy[0][2] != 6:
+                    rollprint = self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)
+
+                    if self.visualize_gui: self.writeInfo(rollprint)
+                    dicecopy[1][2] = 1
 
         elif roll_strategy == 'knowledge_based':
             # Knowledge based rolling strategy
 
-            self.cup.roll_dice_with_value(dicecopy[0][
+            rollprint = self.cup.roll_dice_with_value(dicecopy[0][
                                               2],self.visualize_gui)  # always rolls the lowest die first, this always has the highest chance of getting to a higher bet
+            if self.visualize_gui: self.writeInfo(rollprint)
             dicecopy[1][2] = 1
 
             if not self.bid_possible(
-                    self.cup.dice):  # if the cup is not higher than the bid, make decision whether to roll another die or bluff
+                    self.cup.dice, prints=False):  # if the cup is not higher than the bid, make decision whether to roll another die or bluff
                 if self.visualize_gui: self.writeInfo('First roll did not cause for a higher value than the current bid')
                 if self.visualize_gui: self.drawDice(self.cup.dice)
                 if self.press_to_continue:
@@ -428,7 +456,9 @@ class Game:
                 # Roll for 6s when they are not in the bid and can still be rolled
                 elif 6 not in self.current_bid:  # if there is no 6 in the current bid, another die can be rolled
                     if self.visualize_gui: self.writeInfo('Rolling for a higher value')
-                    self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
+                    rollprint = self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
+                    if self.visualize_gui: self.writeInfo(rollprint)
+
                     dicecopy[1][1] = 1
                     if self.visualize_gui: self.drawDice(self.cup.dice)
                     if self.press_to_continue:
@@ -437,7 +467,8 @@ class Game:
                     if not self.bid_possible(
                             self.cup.dice):  # if the cup is still not higher than the bid, make decision whether to roll another die
                         if self.visualize_gui: self.writeInfo('Rolling for a higher value (2)')
-                        self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
+                        rollprint = self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
+                        if self.visualize_gui: self.writeInfo(rollprint)
                         dicecopy[1][0] = 1
                         if self.visualize_gui: self.drawDice(self.cup.dice)
                         if self.press_to_continue:
@@ -446,8 +477,9 @@ class Game:
                     elif random.randint(1,
                                         100) < 50:  # a higher bid is already obtained, but last dice might still be rolled to get a 6 #TODO: maybe work out probability
                         if self.visualize_gui: self.writeInfo(
-                            f'[ROLL] Cup is already higher, but player is trying to roll {dicecopy[0][0]} to a higher value')
-                        self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
+                            f'[ROLL] Cup is already higher, player tries rolling {dicecopy[0][0]} to higher value')
+                        rollprint = self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
+                        if self.visualize_gui: self.writeInfo(rollprint)
                         dicecopy[1][0] = 1
                         if self.visualize_gui: self.drawDice(self.cup.dice)
 
@@ -459,7 +491,10 @@ class Game:
                         if random.randint(1, 1000) > (
                                 1000 * dicecopy[0][1] / 6):  # a lower dice value has a higher chance to be thrown
                             if self.visualize_gui: self.writeInfo(f'[ROLL] Trying to roll {dicecopy[0][1]} to a higher value')
-                            self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
+                            rollprint = self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
+                            if self.visualize_gui: self.writeInfo(rollprint)
+                            if self.press_to_continue:
+                                input("Press [Enter] to continue...\n")
                             dicecopy[1][1] = 1
                         else:
                             if self.visualize_gui: self.writeInfo(
@@ -603,7 +638,7 @@ class Game:
 
                 higher_possible = [w for w in possible_bets if
                                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-                if self.visualize_gui: self.writeInfo(f'possible bluffs:{higher_possible}')
+                if self.print_info: print(f'possible bluffs ({len(higher_possible)}):{higher_possible}')
                 if len(higher_possible) != 0:  # there is at least one higher possible world for bluffing
                     # create some randomness in bluffing
                     if len(higher_possible) > 2:
@@ -667,13 +702,14 @@ class Game:
             # if self.print_info: print(self.players[i].knowledge)
             higher_possible = [w for w in self.players[i].knowledge if
                                AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-            if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}\n')
+            # if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}\n')
 
 
 ## ----------------------------------------------------------------- ##
 
     # Main loop that plays the game
     def play(self):
+
         while not self.end_game:
             if self.state == states['start']:  # first turn is different than other turns,
                 if self.visualize_gui: self.writeInfo('------------ NEW ROUND --------------')
@@ -689,10 +725,10 @@ class Game:
                     input("Press [Enter] to continue...\n")
                 self.cup.roll_all()
 
-                if self.visualize_gui: self.writeInfo(f"[STARTING ROLL] Player {self.turn +1} rolls the dice")
+                if self.visualize_gui: self.writeInfo(f"[STARTING ROLL] Player {self.turn +1} rolls the dice and rolled {self.cup.dice}")
                 if self.visualize_gui: self.drawDice(self.cup.dice)
 
-                # if self.print_info: print_dice(self.cup.dice)
+
 
                 if self.players[self.turn].bid_strategy == 'truthful':
                     self.current_bid = copy(self.cup.dice)
@@ -730,8 +766,11 @@ class Game:
 
                 if self.visualize_gui: self.writeInfo(f'[ROLL 2]')
                 for d in to_roll:
-                    if self.visualize_gui: self.writeInfo(f'Rolling dice {d}:')
-                    self.cup.roll_dice_with_value(self.cup.dice[d],self.visualize_gui)
+                    # if self.visualize_gui: self.writeInfo(f'Rolling dice {d}:')
+                    rollprint = self.cup.roll_dice_with_value(self.cup.dice[d],self.visualize_gui)
+                    if self.visualize_gui: self.writeInfo(rollprint)
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 if self.visualize_gui: self.drawDice(self.cup.dice)
                 # if self.print_info: print_dice(self.cup.dice)
                 if self.press_to_continue:
@@ -740,8 +779,11 @@ class Game:
 
                 if self.visualize_gui: self.writeInfo(f'[ROLL 3]')
                 for d in to_roll:
-                    if self.visualize_gui: self.writeInfo(f'Rolling dice {d}:')
-                    self.cup.roll_dice_with_value(self.cup.dice[d],self.visualize_gui)
+                    # if self.visualize_gui: self.writeInfo(f'Rolling dice {d}:')
+                    rollprint = self.cup.roll_dice_with_value(self.cup.dice[d], self.visualize_gui)
+                    if self.visualize_gui: self.writeInfo(rollprint)
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 if self.visualize_gui: self.drawDice(self.cup.dice)
                 # if self.print_info: print_dice(self.cup.dice)
 
@@ -833,7 +875,7 @@ class Game:
 
             if self.state == states['roll_dice_phase']:
                 self.roll_dice(self.players[self.turn].roll_strategy)
-                if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has rolled the dice.')
+                if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has rolled the dice and rolled {self.cup.dice}.')
                 if self.visualize_gui: self.drawDice(self.cup.dice)
                 # if self.print_info: print_dice(self.cup.dice)
                 self.update_knowledge()

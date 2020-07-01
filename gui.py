@@ -128,10 +128,10 @@ def initKnowl(self):
     title = Label(self.knowledge, text= "  Player 3 knowledge base  ")
     title.place(relx = 0.25, rely = 0.025)
 
-    lbl1 = Label(self.knowledge, text= "  Possible worlds >= current bid  ", bg='green', pady = 2, fg='white')
+    lbl1 = Label(self.knowledge, text= "  Possible worlds higher or equal than current bid  ", bg='green', pady = 2, fg='white')
     lbl1.place(rely = 0.59, relx = 0.125)
 
-    lbl2 = Label(self.knowledge, text= "  Possible worlds < current bid  ", bg = 'red', pady = 2, fg='white')
+    lbl2 = Label(self.knowledge, text= "  Possible worlds lower than current bid  ", bg = 'red', pady = 2, fg='white')
     lbl2.place(rely = 0.63, relx = 0.125)
 
     lbl3 = Label(self.knowledge, text= "    Impossible worlds    ", bg= 'silver', pady = 2)

@@ -36,7 +36,7 @@ class Cup:
             if print_values: print(f'Rolled die with value {value} to {new_roll}')
             self.dice.append(new_roll)
             self.dice.sort(reverse=True)
-            return str(f'rolled die with value {value} to {new_roll}')
+            return str(f'Rolled die with value {value} to {new_roll}')
         else:
             if print_values: print(f"there is no die of value {value} in the cup")
             return str(f"there is no die of value {value} in the cup")
