@@ -3,7 +3,6 @@ from player import Player
 from cup import Cup
 import numpy as np
 import time
-from visualize_dice import Visualized_game
 
 
 
@@ -54,6 +53,8 @@ def main():
 
     ################    Loop for testing individual games, with info and press to continue     ####################################
     while new_game:  #
+        print("GUI is controlled by pressing [Enter] in the terminal.")
+        input("Press [Enter] to start game.")
         game = Game()
         game.play()
         # i += 1
