@@ -130,8 +130,8 @@ def initKnowl(self):
     self.chart = FigureCanvasTkAgg(fig, self.knowledge)
     self.chart.get_tk_widget().pack(anchor=N)
 
-    title = Label(self.knowledge, text= "  Public knowledge  ")
-    title.place(relx = 0.32, rely = 0.025)
+    title = Label(self.knowledge, text= "  Player 3 knowledge base  ")
+    title.place(relx = 0.25, rely = 0.025)
 
     lbl1 = Label(self.knowledge, text= "  Possible worlds > current bid  ", bg='green', pady = 2, fg='white')
     lbl1.place(rely = 0.59, relx = 0.125)

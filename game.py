@@ -205,8 +205,8 @@ class Game:
         self.gui.chart = FigureCanvasTkAgg(fig, self.gui.knowledge)
         self.gui.chart.get_tk_widget().pack(anchor=N)
 
-        title = Label(self.gui.knowledge, text= "  Public knowledge  ")
-        title.place(relx = 0.32, rely = 0.025)
+        title = Label(self.gui.knowledge, text= "  Player 3 knowledge base  ")
+        title.place(relx = 0.25, rely = 0.025)
 
         lbl1 = Label(self.gui.knowledge, text= "  Possible worlds > current bid  ", bg='green', pady = 2, fg='white')
         lbl1.place(rely = 0.59, relx = 0.125)
@@ -818,7 +818,7 @@ class Game:
             if self.state == states['bidding_phase']:
                 self.bidding(self.players[self.turn].bid_strategy)
                 if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has bid: {self.current_bid}')
-                if self.visualize_gui and self.turn == 2: self.update_knowledge()
+                if self.visualize_gui: self.update_knowledge()
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.update_turn()
