@@ -53,7 +53,7 @@ def main():
 
     ################    Loop for testing individual games, with info and press to continue     ####################################
     while new_game:  #
-        print('When GUI is enabled: Press [Enter] in Terminal to updatare and continue\nAlso: Terminal prints some additional information regarding possible worlds and knowledge that would make GUI too messy')
+        print('When GUI is enabled: Press [Enter] in Terminal to update and continue.\n\nTerminal will print additional information regarding possible worlds and knowledge.\n')
         input("Press [Enter] to start game.")
         game = Game()
         game.play()
