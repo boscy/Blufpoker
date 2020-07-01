@@ -1,9 +1,16 @@
+from tkinter import *
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import random
+import numpy as np
+import seaborn as sns
+
+from gui import GUI
 from player import Player
 from cup import Cup
 from copy import copy, deepcopy
-import random
-import numpy as np
-from visualize_dice import Visualized_game
+
+#a copy for if we want the old game back
 
 losscount = [0, 0, 0]
 
@@ -28,6 +35,12 @@ states = {  # states that a player runs through
     'poker_phase': 6
 }
 
+## GUI variables
+
+bg_colour = "#0D865D"
+info_colour = 'gray'
+kn_colour = 'white'
+db_colour = "#8B4513"
 
 def is_poker(bid):
     if bid[0] == bid[1] and bid[1] == bid[2]:
@@ -93,7 +106,7 @@ def make_jpd(options, pk):  # makes a joint probability of the possible rolls, f
 
 
 class Game:
-    def __init__(self, n_players=3, print_info=True, press_to_continue=False, visualise_game_gui=True, mean_th=3 / 12):
+    def __init__(self, n_players=3, print_info = True, press_to_continue = True, visualize_gui = True, mean_th = 3/12):
         """
         Main function for initializing the game
         """
@@ -102,54 +115,162 @@ class Game:
         self.first_turn = True
         self.current_bid = []
         self.public_knowledge = []
-        self.not_public_knowledge = []
         self.n_players = n_players
         self.cup = Cup()
         self.turn = random.randint(0, n_players - 1)  # first turn is random
         self.state = states['start']
-        self.loser_name = ['H', 'O', 'R', 'S', 'E']  # TODO make is such that user can set this.
+        self.loser_name = ['L', '0', 'Z', 'E', 'R']  # TODO make is such that user can set this.
         self.max_penalty = len(self.loser_name)
         self.max_overbid = 3
         self.believe_threshold_mean = mean_th
-        self.gui_print = ''
 
+        self.visualize_gui = visualize_gui            
         self.print_info = print_info  #
         self.press_to_continue = press_to_continue
-        self.visualise_game_gui = visualise_game_gui
 
         ############# Agent strategies configuration ######################
 
+        self.players[0].roll_strategy = 'random'
+        self.players[0].bid_strategy = 'truthful'
+        self.players[0].determine_bluff_strategy = 'random'
+
+        # self.players[0].roll_strategy = 'greedy'
+        # self.players[0].bid_strategy = 'always_overbid'
+        # self.players[0].determine_bluff_strategy = 'always_true'
+        #
         # self.players[1].roll_strategy = 'random'
         # self.players[1].bid_strategy = 'truthful'
         # self.players[1].determine_bluff_strategy = 'random'
 
-        # self.players[0].roll_strategy = 'random_lowest'
-        # self.players[0].bid_strategy = 'truthful'
-        # self.players[0].determine_bluff_strategy = 'always_true'
-
         self.players[1].roll_strategy = 'greedy'
-        self.players[1].bid_strategy = 'truthful'
+        self.players[1].bid_strategy = 'always_overbid'
         self.players[1].determine_bluff_strategy = 'always_true'
-
-        self.players[0].roll_strategy = '1_lowest'
-        self.players[0].bid_strategy = 'always_overbid'
-        self.players[0].determine_bluff_strategy = 'always_true'
 
         self.players[2].roll_strategy = 'knowledge_based'
         self.players[2].bid_strategy = 'knowledge_based'
         self.players[2].determine_bluff_strategy = 'knowledge_based'
 
+        if visualize_gui: 
+            self.gui = GUI()
+
+        # self.players[1].roll_strategy = 'knowledge_based'
+        # self.players[1].bid_strategy = 'knowledge_based'
+        # self.players[1].determine_bluff_strategy = 'knowledge_based'
+        #
+        # self.players[0].roll_strategy = 'knowledge_based'
+        # self.players[0].bid_strategy = 'knowledge_based'
+        # self.players[0].determine_bluff_strategy = 'knowledge_based'
+
+
+    ## GUI Functions ----------------------------------------- ##
+
+    def moveDiceBox(self,player):
+        if player == 0: self.gui.diceBox.place(rely=0.57, relx = 0.1)
+        elif player == 1: self.gui.diceBox.place(rely = 0.02, relx = 0.07)
+        elif player == 2: self.gui.diceBox.place(rely=0.12, relx = 0.69)
+
+    def writePenalty(self, player, string):
+        penalty = Label(self.gui.penalties, text=string, bg=info_colour)
+        if player == 0: penalty.grid(row = 3, column=3)
+        elif player == 1: penalty.grid(row = 5, column=3)
+        elif player == 2: penalty.grid(row = 7, column=3)
+            
+    def writeInfo(self, string):
+        self.gui.gi_text.insert("1.0", string + "\n")
+
+    def writeKnowledge(self, pw, hW, cb):
+
+        plt.close('all')
+        self.gui.chart.get_tk_widget().pack_forget()
+        fig = plt.figure()
+        data = np.zeros((7,8))
+
+        for world in pw:
+            val = (world[0]*100)+(world[1]*10)+world[2]
+            for y in range(7):
+                for x in range(8):
+                    if self.gui.labels[y][x] == str(val):
+                        data[y][x] = 1
+
+        for world in hW:
+            val = (world[0]*100)+(world[1]*10)+world[2]
+            for y in range(7):
+                for x in range(8):
+                    if self.gui.labels[y][x] == str(val):
+                        data[y][x] = -1
+
+        ax = sns.heatmap(data, annot=self.gui.labels, fmt='',xticklabels=False, yticklabels=False, cmap=self.gui.hm_colours, cbar= False, linewidths=1, linecolor='white')
+        fig.add_subplot(ax)
+
+        self.gui.chart = FigureCanvasTkAgg(fig, self.gui.knowledge)
+        self.gui.chart.get_tk_widget().pack(anchor=N)
+
+        title = Label(self.gui.knowledge, text= "  Public knowledge  ")
+        title.place(relx = 0.32, rely = 0.025)
+
+        lbl1 = Label(self.gui.knowledge, text= "  Possible worlds > current bid  ", bg='green', pady = 2, fg='white')
+        lbl1.place(rely = 0.59, relx = 0.125)
+
+        lbl2 = Label(self.gui.knowledge, text= "  Possible worlds < current bid  ", bg = 'red', pady = 2, fg='white')
+        lbl2.place(rely = 0.63, relx = 0.125)
+
+        lbl3 = Label(self.gui.knowledge, text= "    Impossible worlds    ", bg= 'silver', pady = 2)
+        lbl3.place(rely = 0.67, relx = 0.125)
+
+    def drawDice(self, d):
+        d1 = d[0]-1
+        d2 = d[1]-1
+        d3 = d[2]-1
+
+        self.gui.show_d1 = Label(self.gui.diceBox, image= self.gui.dice[d1])
+        self.gui.show_d1.place(rely = 0.25, relx = 0.25)
+
+        self.gui.show_d2 = Label(self.gui.diceBox, image = self.gui.dice[d2])
+        self.gui.show_d2.place(rely = 0.25, relx = 0.55)
+
+        self.gui.show_d3 = Label(self.gui.diceBox, image = self.gui.dice[d3])
+        self.gui.show_d3.place(rely = 0.55, relx = 0.4)
+
+    def removeDice(self):
+        self.gui.show_d1.place_forget()
+        self.gui.show_d2.place_forget()
+        self.gui.show_d3.place_forget()
+
+    def writeCurrentBid(self, bid):
+        self.gui.currentBid = Button(self.gui.game, text= "Current bid: " + str(bid))
+        self.gui.currentBid.place(relx = 0.4, rely = 0.5)
+
+    def removeOpenDice(self):
+        self.gui.openDie1.place_forget()
+        self.gui.openDie2.place_forget()
+
+    def showOpenDice(self, pk):
+        self.removeOpenDice()
+
+        if len(pk) == 1:
+            self.gui.openDie1 = Label(self.gui.knowledge, image = self.gui.dice[pk[0]-1])
+            self.gui.openDie1.place(relx = 0.05, rely = 0.9)
+        elif len(pk) == 2:
+            self.gui.openDie1 = Label(self.gui.knowledge, image = self.gui.dice[pk[0]-1])
+            self.gui.openDie1.place(relx = 0.05, rely = 0.9)
+            self.gui.openDie2 = Label(self.gui.knowledge, image = self.gui.dice[pk[1]-1])
+            self.gui.openDie2.place(relx = 0.25, rely = 0.9)
+
+
+    ##-----------------------------------------------------------------##
 
     def update_turn(self):  # sets turn to the next player
         self.turn = (self.turn + 1) % self.n_players
+        if self.visualize_gui: self.moveDiceBox(self.turn)
+        
 
     def bid_possible(self, bid):
         if AllPossibleWorlds.index(self.current_bid) < AllPossibleWorlds.index(bid):
-            if self.print_info: print(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
+            if self.visualize_gui: self.writeInfo(f'Truthful bid is possible, {bid} higher than {self.current_bid}')
             # self.if self.print_info: print_dice(bid)
             return True
         else:
-            if self.print_info: print(f'Truthful bid is impossible, {bid} not higher than {self.current_bid}')
+            if self.visualize_gui: self.writeInfo(f'Truthful bid is impossible, {bid} not higher than {self.current_bid}')
             return False
 
     def determine_bluff(self, strategy):
@@ -157,24 +278,18 @@ class Game:
             believe_percentage = 80
             if random.randint(1, 100) > believe_percentage or (  # believing probability
                     AllPossibleWorlds.index(self.current_bid) == len(AllPossibleWorlds) - 1):
-
                 return True
-
             else:
-
                 return False
 
-        elif strategy == 'always_true':  # believes > no bluff
-
-            return False
+        elif strategy == 'always_true':
+            return True
 
         elif strategy == 'always_false':
-
-            return True
+            return False
 
         elif strategy == 'knowledge_based':
             if self.current_bid not in self.players[self.turn].knowledge:
-            #TODO, fix for low bids that knowledge agent does always call bluff
                 return True
 
             else:
@@ -195,10 +310,12 @@ class Game:
                     # if self.print_info: print(w)
                     if w in jpd[0]:
                         probability += jpd[1][jpd[0].index(w)]
-
+                if self.visualize_gui: self.writeInfo("Player 3 decision making process for believing / calling bluff...")
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 if self.print_info: print(
                     f'Probability of rolling possible higher worlds among possible worlds: {probability}')
-
+                if self.visualize_gui: self.writeInfo(f'Probability of rolling possible higher worlds among possible worlds: {round(probability, 2)}')
                 # add variable threshold depending on public knowledge (since belief probability depends on proportion of possible worlds, which is more variable with less pk)
 
                 if len(self.public_knowledge) == 2:
@@ -213,211 +330,100 @@ class Game:
 
                 if probability >= believe_threshold:
                     if self.print_info: print(f' {probability} >= {believe_threshold}')
-
+                    if self.visualize_gui: self.writeInfo(f'Probability: {round(probability, 2)} >= Threshold: {round(believe_threshold[0], 2)}')
                     return False  # not a bluff -> believe
                 else:
                     if self.print_info: print(f' {probability} < {believe_threshold}')
-
+                    if self.visualize_gui: self.writeInfo(f'Probability: {round(probability, 2)} < Threshold: {round(believe_threshold[0], 2)}')
                     return True
 
     def roll_dice(self, roll_strategy):
         # dice are always ordered, so ranked from highest to lowest
         # maintain which dice are rolled, such that we can know what can be set as public knowledge
-        dicecopy = [deepcopy(self.cup.dice), [0, 0, 0]]  # make a copy of the dice and whether they are rolled
+        dicecopy = [copy(self.cup.dice), [0, 0, 0]]  # make a copy of the dice and whether they are rolled
 
-        # roll according to strategies 'random', '1_lowest', 'random_lowest', 'greedy', 'knowledge_based'
+        # roll according to strategies 'random', '1_lowest', 'random_lowest' or 'greedy'
         if roll_strategy == 'random':
-            if self.print_info: print('[ROLL] Rolling random die')
+            if self.visualize_gui: self.writeInfo('[ROLL] Rolling random die')
             randomDie = random.randint(0, 2)
-            self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][randomDie], self.print_info)
+            self.cup.roll_dice_with_value(dicecopy[0][randomDie],self.visualize_gui)
             dicecopy[1][randomDie] = 1
-            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                        know1=self.players[0].knowledge,
-                                                        know2=self.players[1].knowledge,
-                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                        penal1=self.players[0].penalty_points,
-                                                        penal2=self.players[1].penalty_points,
-                                                        penal3=self.players[2].penalty_points,
-                                                        losername=self.loser_name,
-                                                        current_bid=self.current_bid, text='', printtext=self.gui_print)
+            
 
         elif roll_strategy == '1_lowest':
-            if self.print_info: print('[ROLL] Rolling 1 lowest die ')
-            self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][2], self.print_info)  # rolls the lowest die
+            if self.visualize_gui: self.writeInfo('[ROLL] Rolling 1 lowest die ')
+            self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)  # rolls the lowest die
             dicecopy[1][2] = 1
-            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                        know1=self.players[0].knowledge,
-                                                        know2=self.players[1].knowledge,
-                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                        penal1=self.players[0].penalty_points,
-                                                        penal2=self.players[1].penalty_points,
-                                                        penal3=self.players[2].penalty_points,
-                                                        losername=self.loser_name,
-                                                        current_bid=self.current_bid, text='', printtext=self.gui_print)
 
         elif roll_strategy == 'random_lowest':
-            if self.print_info: print(
-                '[ROLL] Rolling random n lowest dice')  # rolls the n lowest dice, with n randomly determined
+            if self.visualize_gui: self.writeInfo('[ROLL] Rolling random n lowest dice') # rolls the n lowest dice, with n randomly determined
             random_n = random.randint(0, 2)
-            self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][2], self.print_info)
+            self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)
             dicecopy[1][2] = 1
-            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                        know1=self.players[0].knowledge,
-                                                        know2=self.players[1].knowledge,
-                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                        penal1=self.players[0].penalty_points,
-                                                        penal2=self.players[1].penalty_points,
-                                                        penal3=self.players[2].penalty_points,
-                                                        losername=self.loser_name,
-                                                        current_bid=self.current_bid, text='', printtext=self.gui_print)
             if random_n > 0:  # must be done dice by dice since reshuffle disallows a loop
-                self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][1], self.print_info)
+                self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
                 dicecopy[1][1] = 1
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
             if random_n > 1:
-                self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][0], self.print_info)
+                self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
                 dicecopy[1][0] = 1
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
 
         elif roll_strategy == 'greedy':  # rolls all dice that aren't 6's
-            if self.print_info: print('[ROLL] Rolling greedy (all non-6 dice)')
+            if self.visualize_gui: self.writeInfo('[ROLL] Rolling greedy (all non-6 dice)')
             if dicecopy[0][0] != 6:
-                self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][0], self.print_info)
+                self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
                 dicecopy[1][0] = 1
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
             if dicecopy[0][1] != 6:
-                self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][1], self.print_info)
+                self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
                 dicecopy[1][1] = 1
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
             if dicecopy[0][2] != 6:
-                self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][2], self.print_info)
+                self.cup.roll_dice_with_value(dicecopy[0][2],self.visualize_gui)
                 dicecopy[1][2] = 1
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
 
         elif roll_strategy == 'knowledge_based':
             # Knowledge based rolling strategy
 
-            self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][
-                                                                2],
-                                                            self.print_info)  # always rolls the lowest die first, this always has the highest chance of getting to a higher bet
+            self.cup.roll_dice_with_value(dicecopy[0][
+                                              2],self.visualize_gui)  # always rolls the lowest die first, this always has the highest chance of getting to a higher bet
             dicecopy[1][2] = 1
-            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                        know1=self.players[0].knowledge,
-                                                        know2=self.players[1].knowledge,
-                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                        penal1=self.players[0].penalty_points,
-                                                        penal2=self.players[1].penalty_points,
-                                                        penal3=self.players[2].penalty_points,
-                                                        losername=self.loser_name,
-                                                        current_bid=self.current_bid, text='', printtext=self.gui_print)
+
             if not self.bid_possible(
                     self.cup.dice):  # if the cup is not higher than the bid, make decision whether to roll another die or bluff
-                if self.print_info: print('First roll did not cause for a higher value than the current bid')
+                if self.visualize_gui: self.writeInfo('First roll did not cause for a higher value than the current bid')
+                if self.visualize_gui: self.drawDice(self.cup.dice)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 # implement small chance (1/6) of bluffing on poker in bidding round, if two dice can be displayed
                 if dicecopy[0][0] == dicecopy[0][1] and random.randint(0, 1000) < 167:  # first two dice are the same
                     self.players[self.turn].bluff_poker = True
                     self.players[self.turn].bluff_value = dicecopy[0][0]
-                    if self.print_info: print('Two open dice are the same, bluffing for poker, since its possible')
+                    if self.visualize_gui: self.writeInfo('Two open dice are the same, bluffing for poker, since its possible')
 
                 # Roll for 6s when they are not in the bid and can still be rolled
                 elif 6 not in self.current_bid:  # if there is no 6 in the current bid, another die can be rolled
-                    if self.print_info: print('Rolling for a higher value')
-                    self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][1], self.print_info)
+                    if self.visualize_gui: self.writeInfo('Rolling for a higher value')
+                    self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
                     dicecopy[1][1] = 1
-                    if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                                know1=self.players[0].knowledge,
-                                                                know2=self.players[1].knowledge,
-                                                                know3=self.players[2].knowledge, turn=self.turn,
-                                                                penal1=self.players[0].penalty_points,
-                                                                penal2=self.players[1].penalty_points,
-                                                                penal3=self.players[2].penalty_points,
-                                                                losername=self.loser_name,
-                                                                current_bid=self.current_bid, text='',
-                                                                printtext=self.gui_print)
+                    if self.visualize_gui: self.drawDice(self.cup.dice)
                     if self.press_to_continue:
                         input("Press [Enter] to continue...\n")
 
                     if not self.bid_possible(
                             self.cup.dice):  # if the cup is still not higher than the bid, make decision whether to roll another die
-                        if self.print_info: print('Rolling for a higher value (2)')
-                        self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][0], self.print_info)
+                        if self.visualize_gui: self.writeInfo('Rolling for a higher value (2)')
+                        self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
                         dicecopy[1][0] = 1
-                        if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                                    know1=self.players[0].knowledge,
-                                                                    know2=self.players[1].knowledge,
-                                                                    know3=self.players[2].knowledge, turn=self.turn,
-                                                                    penal1=self.players[0].penalty_points,
-                                                                    penal2=self.players[1].penalty_points,
-                                                                    penal3=self.players[2].penalty_points,
-                                                                    losername=self.loser_name,
-                                                                    current_bid=self.current_bid, text='',
-                                                                    printtext=self.gui_print)
+                        if self.visualize_gui: self.drawDice(self.cup.dice)
                         if self.press_to_continue:
                             input("Press [Enter] to continue...\n")
 
                     elif random.randint(1,
                                         100) < 50:  # a higher bid is already obtained, but last dice might still be rolled to get a 6 #TODO: maybe work out probability
-                        if self.print_info: print(
-                            f'[ROLL] Cup is already higher, but Player is trying to roll {dicecopy[0][0]} to a higher value')
-                        self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][0], self.print_info)
+                        if self.visualize_gui: self.writeInfo(
+                            f'[ROLL] Cup is already higher, but player is trying to roll {dicecopy[0][0]} to a higher value')
+                        self.cup.roll_dice_with_value(dicecopy[0][0],self.visualize_gui)
                         dicecopy[1][0] = 1
-                        if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                                    know1=self.players[0].knowledge,
-                                                                    know2=self.players[1].knowledge,
-                                                                    know3=self.players[2].knowledge, turn=self.turn,
-                                                                    penal1=self.players[0].penalty_points,
-                                                                    penal2=self.players[1].penalty_points,
-                                                                    penal3=self.players[2].penalty_points,
-                                                                    losername=self.loser_name,
-                                                                    current_bid=self.current_bid, text='',
-                                                                    printtext=self.gui_print)
+                        if self.visualize_gui: self.drawDice(self.cup.dice)
+
 
                 # otherwise maybe roll, or maybe bluff, depending on the value of the remaining dice
                 else:  # there is at least a 6 in the bid, now there are 2 possibilities:
@@ -425,28 +431,17 @@ class Game:
                         # implement a chance to roll the other dice, otherwise go to bid phase and bluff
                         if random.randint(1, 1000) > (
                                 1000 * dicecopy[0][1] / 6):  # a lower dice value has a higher chance to be thrown
-                            if self.print_info: print(f'[ROLL] Trying to roll {dicecopy[0][1]} to a higher value')
-                            self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(dicecopy[0][1], self.print_info)
+                            if self.visualize_gui: self.writeInfo(f'[ROLL] Trying to roll {dicecopy[0][1]} to a higher value')
+                            self.cup.roll_dice_with_value(dicecopy[0][1],self.visualize_gui)
                             dicecopy[1][1] = 1
-                            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=[],
-                                                                        know1=self.players[0].knowledge,
-                                                                        know2=self.players[1].knowledge,
-                                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                                        penal1=self.players[0].penalty_points,
-                                                                        penal2=self.players[1].penalty_points,
-                                                                        penal3=self.players[2].penalty_points,
-                                                                        losername=self.loser_name,
-                                                                        current_bid=self.current_bid, text='',
-                                                                        printtext=self.gui_print)
                         else:
-                            if self.print_info: print(
+                            if self.visualize_gui: self.writeInfo(
                                 f'Player thinks bluffing with the dice open is less risky than to roll {dicecopy[0][1]}')
 
                     elif dicecopy[0][0] == dicecopy[0][
                         0] == 6:  # otherwise both unrolled dice are 6, a bluff will be made in bidding phase on the basis of knowledge
                         self.players[self.turn].bluff_poker = True
                         self.players[self.turn].bluff_value = dicecopy[0][0]
-
 
         # if self.print_info: print(dicecopy)
         self.public_knowledge = []
@@ -457,63 +452,58 @@ class Game:
                 # if self.print_info: print(f'value = {value}')
                 self.public_knowledge.append(value)
 
-        self.gui_print += f'\nCommon knowledge (non-rolled dice): {self.public_knowledge}'
-        if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                    know1=self.players[0].knowledge,
-                                                    know2=self.players[1].knowledge,
-                                                    know3=self.players[2].knowledge, turn=self.turn,
-                                                    penal1=self.players[0].penalty_points,
-                                                    penal2=self.players[1].penalty_points,
-                                                    penal3=self.players[2].penalty_points,
-                                                    losername=self.loser_name,
-                                                    current_bid=self.current_bid, text='',
-                                                    printtext=self.gui_print)
+        # if self.visualize_gui: 
+        #     if len(self.public_knowledge != 0):
+        #         self.showOpenDice(self.public_knowledge)
 
     def roll_poker(self, threshold):
         to_roll = []
+        pokers = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
+        hW = [p for p in pokers if p > self.cup.dice]
 
+        if self.visualize_gui: self.writeKnowledge(pokers, hW, self.cup.dice)
         # Poker is rolled
         if is_poker(self.cup.dice):
             if self.cup.dice[0] > threshold:
-                if self.print_info: print('Poker beaten')
+                if self.visualize_gui: self.writeInfo('Poker beaten')
                 self.penalise_poker(2)
             elif self.cup.dice[0] == threshold:
-                if self.print_info: print('Poker equalled')
+                if self.visualize_gui: self.writeInfo('Poker equalled')
                 self.penalise_poker(1)
             else:
-                if self.print_info: print('Poker rolled, but not high enough. rolling all again.')
+                if self.visualize_gui: self.writeInfo('Poker rolled, but not high enough. rolling all again.')
                 to_roll.extend([0, 1, 2])
 
         # Highest dice are equal
         elif self.cup.dice[0] == self.cup.dice[1]:
             if self.cup.dice[0] >= threshold:
-                if self.print_info: print('Equal dice with value high enough, rolling dice 2 again.')
+                if self.visualize_gui: self.writeInfo('Equal dice with value high enough, rolling dice 2 again.')
                 to_roll.append(2)
             elif self.cup.dice[2] >= threshold:
-                if self.print_info: print('Equal dice with value NOT high enough, but lowest is. rolling 0, 1 again.')
+                if self.visualize_gui: self.writeInfo('Equal dice with value NOT high enough, but lowest is. rolling 0, 1 again.')
                 to_roll.extend([0, 1])
             else:
-                if self.print_info: print('Equal dice with value NOT high enough, rolling all again.')
+                if self.visualize_gui: self.writeInfo('Equal dice with value NOT high enough, rolling all again.')
                 to_roll.extend([0, 1, 2])
 
         # Lowest dice are equal
         elif self.cup.dice[1] == self.cup.dice[2]:
             if self.cup.dice[1] >= threshold:
-                if self.print_info: print('Equal dice with value high enough, rolling dice 0 again.')
+                if self.visualize_gui: self.writeInfo('Equal dice with value high enough, rolling dice 0 again.')
                 to_roll.append(0)
             elif self.cup.dice[0] >= threshold:
-                if self.print_info: print('Equal dice with value NOT high enough, but highest is. rolling 1, 2 again.')
+                if self.visualize_gui: self.writeInfo('Equal dice with value NOT high enough, but highest is. rolling 1, 2 again.')
                 to_roll.extend([1, 2])
             else:
-                if self.print_info: print('Equal dice with value NOT high enough, rolling all again.')
+                if self.visualize_gui: self.writeInfo('Equal dice with value NOT high enough, rolling all again.')
                 to_roll.extend([0, 1, 2])
 
         # No dice are equal
         elif self.cup.dice[0] >= threshold:
-            if self.print_info: print('Highest dice beats threshold, rolling dice 1 and dice 2 again.')
+            if self.visualize_gui: self.writeInfo('Highest dice beats threshold, rolling dice 1 and dice 2 again.')
             to_roll.extend([1, 2])
         else:
-            if self.print_info: print('No die was high enough, rolling all dice again.')
+            if self.visualize_gui: self.writeInfo('No die was high enough, rolling all dice again.')
             to_roll.extend([0, 1, 2])
 
         return to_roll
@@ -523,50 +513,17 @@ class Game:
         equal = 1
         lost = 0
 
-        if self.print_info: print(f'[PENALISE POKER] The poker was {self.current_bid} and the cup has {self.cup.dice}')
+        if self.visualize_gui: self.writeInfo(f'[PENALISE POKER] The poker was {self.current_bid} and the cup has {self.cup.dice}')
         if outcome == won:
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
-            if self.print_info: print(
-                f'Player {self.turn+1} has rolled a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players +1} gets one penalty point')
-            self.gui_print += f'\nPlayer {self.turn+1} has rolled a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players+1} gets one penalty point'
-            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                        know1=self.players[0].knowledge,
-                                                        know2=self.players[1].knowledge,
-                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                        penal1=self.players[0].penalty_points,
-                                                        penal2=self.players[1].penalty_points,
-                                                        penal3=self.players[2].penalty_points,
-                                                        losername=self.loser_name,
-                                                        current_bid=self.current_bid, text='',
-                                                        printtext=self.gui_print)
+            if self.visualize_gui: self.writeInfo(
+                f'Player {self.turn +1} has rolled a higher poker! Player {(self.turn + self.n_players - 1) % self.n_players +1} gets one penalty point')
             self.turn = (self.turn + self.n_players - 1) % self.n_players  # previous player can start again
         elif outcome == equal:
-            if self.print_info: print(f'Player {self.turn+1} has rolled the same poker! No player gets a penalty point.')
-            self.gui_print += f'\nPlayer {self.turn+1} has rolled the same poker! No player gets a penalty point.'
-            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                        know1=self.players[0].knowledge,
-                                                        know2=self.players[1].knowledge,
-                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                        penal1=self.players[0].penalty_points,
-                                                        penal2=self.players[1].penalty_points,
-                                                        penal3=self.players[2].penalty_points,
-                                                        losername=self.loser_name,
-                                                        current_bid=self.current_bid, text='',
-                                                        printtext=self.gui_print)
+            if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has rolled the same poker! No player gets a penalty point.')
         elif outcome == lost:
             self.players[self.turn].penalty_points += 1
-            if self.print_info: print(f'Player {self.turn+1} did not roll high enough and gets one penalty point.')
-            self.gui_print += f'\nPlayer {self.turn+1} did not roll high enough and gets one penalty point.'
-            if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                        know1=self.players[0].knowledge,
-                                                        know2=self.players[1].knowledge,
-                                                        know3=self.players[2].knowledge, turn=self.turn,
-                                                        penal1=self.players[0].penalty_points,
-                                                        penal2=self.players[1].penalty_points,
-                                                        penal3=self.players[2].penalty_points,
-                                                        losername=self.loser_name,
-                                                        current_bid=self.current_bid, text='',
-                                                        printtext=self.gui_print)
+            if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} did not roll high enough and gets one penalty point.')
 
     def bidding(self, strategy):
         if strategy == 'truthful':
@@ -621,7 +578,7 @@ class Game:
 
                 higher_possible = [w for w in possible_bets if
                                    AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
-                if self.print_info: print(f'possible bluffs:{higher_possible}')
+                if self.visualize_gui: self.writeInfo(f'possible bluffs:{higher_possible}')
                 if len(higher_possible) != 0:  # there is at least one higher possible world for bluffing
                     # create some randomness in bluffing
                     if len(higher_possible) > 2:
@@ -636,36 +593,32 @@ class Game:
                     if (AllPossibleWorlds.index(self.current_bid) + 1) < 56:
                         self.current_bid = AllPossibleWorlds[
                             AllPossibleWorlds.index(self.current_bid) + 1]  # bid slightly higher than previous player
+        if self.visualize_gui: self.writeCurrentBid(self.current_bid)
 
     def penalise(self):
-        if self.print_info: print(f'[PENALISE] The bid was {self.current_bid} and the cup has {self.cup.dice}')
+        if self.visualize_gui: self.writeInfo(f'[PENALISE] The bid was {self.current_bid} and the cup has {self.cup.dice}')
         if AllPossibleWorlds.index(self.current_bid) > AllPossibleWorlds.index(
                 self.cup.dice):  # the bid was higher than the cup, previous player was bluffing/lying
             self.players[(self.turn + self.n_players - 1) % self.n_players].penalty_points += 1
-            if self.print_info: print(
-                f'Player {self.turn} was right, Player {(self.turn + self.n_players - 1) % self.n_players} gets one penalty point')
+            if self.visualize_gui: self.writeInfo(
+                f'Player {self.turn +1} was right, Player {(self.turn + self.n_players - 1) % self.n_players +1} gets one penalty point')
             self.turn = (self.turn + self.n_players - 1) % self.n_players  # previous player can start again
         else:
             self.players[self.turn].penalty_points += 1
-            if self.print_info: print(f'Player {self.turn+1} was wrong and gets one penalty point')
+            if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} was wrong and gets one penalty point')
             # turn remains with this player
-        self.gui_print += f'\n[PENALISE] The bid was {self.current_bid} and the cup has {self.cup.dice}\nPlayer {self.turn+1} was wrong and gets one penalty point'
-        if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                    know1=self.players[0].knowledge,
-                                                    know2=self.players[1].knowledge,
-                                                    know3=self.players[2].knowledge, turn=self.turn,
-                                                    penal1=self.players[0].penalty_points,
-                                                    penal2=self.players[1].penalty_points,
-                                                    penal3=self.players[2].penalty_points,
-                                                    losername=self.loser_name,
-                                                    current_bid=self.current_bid, text='', printtext=self.gui_print)
 
     def update_knowledge(self):
         if self.print_info: print(f'Open dice are: {self.public_knowledge}')
+        if self.visualize_gui: self.showOpenDice(self.public_knowledge)
+
+        
+        # if self.visualize_gui: 
+        #     if len(self.public_knowledge != 0): self.showOpenDice(self.public_knowledge)
         for i in range(self.n_players):
             if i == self.turn:
                 self.players[i].knowledge = [self.cup.dice]
-            else:
+            else:   
                 if len(self.public_knowledge) == 0:  # no visible dice means all are unknown
                     self.players[i].knowledge = AllPossibleWorlds
                 elif len(self.public_knowledge) == 1:  # one dice visible
@@ -678,37 +631,41 @@ class Game:
                     else:
                         self.players[i].knowledge = list(s for s in AllPossibleWorlds if s.count(
                             pk1) >= 2)  # all instances of possible worlds with two dice of the same kind
+                higher_possible = [w for w in self.players[i].knowledge if
+                               AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]            
+                if self.visualize_gui: self.writeKnowledge(self.players[i].knowledge, higher_possible, self.current_bid)
 
-
-            # Printing knowledge of agents :
+            
             if self.print_info: print(
-                f'Player {i} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
-            if self.print_info: print(self.players[i].knowledge)
+                f'Player {i +1} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge}')
+            # if self.print_info: print(self.players[i].knowledge)
             higher_possible = [w for w in self.players[i].knowledge if
                                AllPossibleWorlds.index(w) > AllPossibleWorlds.index(self.current_bid)]
             if self.print_info: print(f'of which the following are higher than current bid ({len(higher_possible)}): {higher_possible}\n')
 
+
+## ----------------------------------------------------------------- ##
+
     # Main loop that plays the game
     def play(self):
         while not self.end_game:
-            # start_visuals()
             if self.state == states['start']:  # first turn is different than other turns,
-                if self.print_info: print('------------ NEW ROUND --------------')
-                if self.print_info: print(f'[STARTING TURN] of Player {self.turn + 1}')
-                self.gui_print = ''
-                self.gui_print += f'[STARTING TURN] of Player {self.turn + 1}'
-
-
+                if self.visualize_gui: self.writeInfo('------------ NEW ROUND --------------')
+                if self.visualize_gui: self.writeInfo(f'[STARTING TURN] of Player {self.turn +1}')
+                if self.visualize_gui: self.removeDice()
+                if self.visualize_gui: self.moveDiceBox(self.turn)
                 # self.cup.roll_all()
                 self.first_turn = True  # might be used in belief probability
                 self.public_knowledge.clear()
-                # self.cup.dice = [2, 2, 2]
+                # self.cup.dice = [6, 6, 2]
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 self.cup.roll_all()
 
-                self.gui_print += f"\n[STARTING ROLL] Player {self.turn + 1} rolls the dice and rolls {self.cup.dice}"
-                # print(self.gui_print)
-                if self.print_info: print(f"[STARTING ROLL] Player {self.turn + 1} rolls the dice and rolls:")
-                if self.print_info: print_dice(self.cup.dice)
+                if self.visualize_gui: self.writeInfo(f"[STARTING ROLL] Player {self.turn +1} rolls the dice")
+                if self.visualize_gui: self.drawDice(self.cup.dice)
+
+                # if self.print_info: print_dice(self.cup.dice)
 
                 if self.players[self.turn].bid_strategy == 'truthful':
                     self.current_bid = copy(self.cup.dice)
@@ -718,121 +675,48 @@ class Game:
                     self.current_bid = random_bid_return()  # random bid
 
                 self.update_knowledge()
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid='', text='',
-                                                            printtext=self.gui_print)
 
-                self.gui_print += f"\n[STARTING BID] Player {self.turn + 1} bids: {self.current_bid}"
-                if self.print_info: print(f"[STARTING BID] Player {self.turn} bids: {self.current_bid}")
+                if self.visualize_gui: self.writeInfo(f"[STARTING BID] Player {self.turn +1} bids: {self.current_bid}")
+                if self.visualize_gui: self.writeCurrentBid(self.current_bid)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice,
-                                                            public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
                 self.update_turn()
+                
                 self.state = states['believe/call_bluff_phase']
-
-
-                self.gui_print += f'\nPlayer {self.turn+1} has to believe or call the bluff'
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
                 continue
 
             if self.state == states['poker_phase']:
                 threshold = self.current_bid[0]
                 to_roll = []
 
-                if self.print_info: print(
-                    f'[POKER PHASE] Player {self.turn+1} has three rolls to try and equal or beat {self.current_bid}.')
-                self.gui_print += f'\n[POKER PHASE] Player {self.turn+1} has three rolls to try and equal or beat {self.current_bid}.'
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
+                if self.visualize_gui: self.writeInfo(
+                    f'[POKER PHASE] Player {self.turn +1} has three rolls to try and equal or beat {self.current_bid}.')
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 self.cup.roll_all()
-                if self.print_info: print(f'[ROLL 1] Player {self.turn+1} rolls the dice and rolls:')
-                self.gui_print += f'\n[ROLL 1] Player {self.turn+1} rolls the dice and rolls {self.cup.dice}'
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
-                if self.print_info: print_dice(self.cup.dice)
+                if self.visualize_gui: self.writeInfo(f'[ROLL 1] Player {self.turn +1} rolls the dice and rolls:')
+                if self.visualize_gui: self.drawDice(self.cup.dice)
+                # if self.print_info: print_dice(self.cup.dice)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 to_roll = self.roll_poker(threshold)
 
-                if self.print_info: print(f'[ROLL 2]')
+                if self.visualize_gui: self.writeInfo(f'[ROLL 2]')
                 for d in to_roll:
-                    if self.print_info: print(f'Rolling dice {d}:')
-                    self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(self.cup.dice[d], self.print_info)
-                if self.print_info: print_dice(self.cup.dice)
-                self.gui_print += f'\n[ROLL 2] Player {self.turn + 1} rolls the dice and rolls {self.cup.dice}'
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
-
+                    if self.visualize_gui: self.writeInfo(f'Rolling dice {d}:')
+                    self.cup.roll_dice_with_value(self.cup.dice[d],self.visualize_gui)
+                if self.visualize_gui: self.drawDice(self.cup.dice)
+                # if self.print_info: print_dice(self.cup.dice)
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 to_roll = self.roll_poker(threshold)
 
-                if self.print_info: print(f'[ROLL 3]')
+                if self.visualize_gui: self.writeInfo(f'[ROLL 3]')
                 for d in to_roll:
-                    if self.print_info: print(f'Rolling dice {d}:')
-                    self.gui_print += f'\nPlayer {self.turn + 1} '+ self.cup.roll_dice_with_value(self.cup.dice[d], self.print_info)
-                if self.print_info: print_dice(self.cup.dice)
-                self.gui_print += f'\n[ROLL 2] Player {self.turn + 1} rolls the dice and rolls {self.cup.dice}'
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
+                    if self.visualize_gui: self.writeInfo(f'Rolling dice {d}:')
+                    self.cup.roll_dice_with_value(self.cup.dice[d],self.visualize_gui)
+                if self.visualize_gui: self.drawDice(self.cup.dice)
+                # if self.print_info: print_dice(self.cup.dice)
 
                 if is_poker(self.cup.dice) and self.cup.dice[0] > threshold:
                     self.penalise_poker(2)
@@ -841,45 +725,18 @@ class Game:
                 else:
                     self.penalise_poker(0)
 
-                self.gui_print += f"\n[SCORE] is now as follows:"
-                if self.print_info: print('[SCORE] is now as follows:', end=" ")
-                for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
-                    self.gui_print += f"\nPlayer {i+1}: {self.players[i].penalty_points} points: "
-                    if self.print_info: print(f'Player {i+1}: {self.players[i].penalty_points} points: ', end=" ")
-                    if self.print_info: print_string = [self.loser_name[j] for j in
-                                                        range(self.players[i].penalty_points)]
-                    if self.print_info: print("".join(print_string), end=" ")
-                    self.gui_print += "".join([self.loser_name[j] for j in
-                                                      range(self.players[i].penalty_points)])
-
-                if self.print_info: print()  # if self.print_info: print for new line
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
+                # if self.visualize_gui: self.writeInfo('[SCORE] is now as follows:')
+                # for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
+                #     if self.visualize_gui: self.writeInfo(f'Player {i +1}: {self.players[i].penalty_points} points: ')
+                #     if self.visualize_gui: print_string = [self.loser_name[j] for j in
+                #                                         range(self.players[i].penalty_points)]
+                #     if self.visualize_gui: self.writeInfo("".join(print_string))
+                # if self.print_info: print()  # if self.print_info: print for new line
 
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
                     if self.players[i].penalty_points == self.max_penalty:
-
-                        if self.print_info: print(
-                            f'Player {i+1} has {self.max_penalty} penalty points and has lost the game!')
-                        self.gui_print += f'\nPlayer {i+1} has {self.max_penalty} penalty points and has lost the game!'
-                        if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                                    know1=self.players[0].knowledge,
-                                                                    know2=self.players[1].knowledge,
-                                                                    know3=self.players[2].knowledge, turn=self.turn,
-                                                                    penal1=self.players[0].penalty_points,
-                                                                    penal2=self.players[1].penalty_points,
-                                                                    penal3=self.players[2].penalty_points,
-                                                                    losername=self.loser_name,
-                                                                    current_bid=self.current_bid, text='',
-                                                                    printtext=self.gui_print)
+                        if self.visualize_gui: self.writeInfo(
+                            f'Player {i +1} has {self.max_penalty} penalty points and has lost the game!')
                         self.players[i].losses += 1
                         losscount[i] += 1
                         self.end_game = True
@@ -893,45 +750,23 @@ class Game:
 
             if self.state == states['penalty_phase']:
                 self.penalise()
+                if self.visualize_gui: self.removeOpenDice()
 
-                self.gui_print += f"\n[SCORE] is now as follows:"
-                if self.print_info: print('[SCORE] is now as follows:', end=" ")
-                for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
-                    # self.gui_print += f"\nPlayer {i}: {self.players[i].penalty_points} points: "
-                    if self.print_info: print(f'Player {i+1}: {self.players[i].penalty_points} points: ', end=" ")
-                    if self.print_info: print_string = [self.loser_name[j] for j in
-                                                        range(self.players[i].penalty_points)]
-                    if self.print_info: print("".join(print_string), end=" ")
-                    self.gui_print += f"\nPlayer {i+1}: {self.players[i].penalty_points} points: " + "".join(
-                        [self.loser_name[j] for j in
-                         range(self.players[i].penalty_points)])
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
+                for i in range(self.n_players):
+                    penalty = self.loser_name[:self.players[i].penalty_points]
+                    if self.visualize_gui: self.writePenalty(i, penalty)
+                # if self.visualize_gui: self.writeInfo('[SCORE] is now as follows:')
+                # for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
+                #     if self.visualize_gui: self.writeInfo(f'Player {i}: {self.players[i].penalty_points} points: ')
+                #     if self.visualize_gui: print_string = [self.loser_name[j] for j in
+                #                                         range(self.players[i].penalty_points)]
+                #     if self.visualize_gui: self.writeInfo("".join(print_string))
+                # if self.print_info: print()  # if self.print_info: print for new line
 
                 for i in range(self.n_players):  # check if a player has lost (i.e has the max penalty points)
                     if self.players[i].penalty_points == self.max_penalty:
-                        if self.print_info: print(
-                            f'Player {i+1} has {self.max_penalty} penalty points and has lost the game!')
-                        self.gui_print += f'\nPlayer {i+1} has {self.max_penalty} penalty points and has lost the game!'
-                        if self.visualise_game_gui: Visualized_game(cup=self.cup.dice,
-                                                                    public_knowledge=self.public_knowledge,
-                                                                    know1=self.players[0].knowledge,
-                                                                    know2=self.players[1].knowledge,
-                                                                    know3=self.players[2].knowledge, turn=self.turn,
-                                                                    penal1=self.players[0].penalty_points,
-                                                                    penal2=self.players[1].penalty_points,
-                                                                    penal3=self.players[2].penalty_points,
-                                                                    losername=self.loser_name,
-                                                                    current_bid=self.current_bid, text='',
-                                                                    printtext=self.gui_print)
+                        if self.visualize_gui: self.writeInfo(
+                            f'Player {i +1} has {self.max_penalty} penalty points and has lost the game!')
                         self.players[i].losses += 1
                         losscount[i] += 1
                         self.end_game = True
@@ -946,46 +781,24 @@ class Game:
                 # ------------- These states are looped within one round --------------
 
             if self.state == states['believe/call_bluff_phase']:
-
-                if self.print_info: print(f'[TURN] of Player {self.turn + 1}')
+                if self.visualize_gui: self.writeInfo(f'[TURN] of Player {self.turn +1}')
+                if self.press_to_continue:
+                    input("Press [Enter] to continue...\n")
                 if self.determine_bluff(
                         self.players[self.turn].determine_bluff_strategy):  # if true, then agent believes it is a bluff
-                    self.gui_print += f"\nPlayer {self.turn + 1} does not believe Player {(self.turn + self.n_players - 1) % self.n_players + 1} (i.e. {self.current_bid} is not under the cup)'"
-                    if self.print_info: print(
-                        f'Player {self.turn} does not believe Player {(self.turn + self.n_players - 1) % self.n_players + 1} (i.e. {self.current_bid} is not under the cup)')
+                    if self.visualize_gui: self.writeInfo(
+                        f'Player {self.turn +1} does not believe Player {(self.turn + self.n_players - 1) % self.n_players +1} (i.e. {self.current_bid} is not under the cup)')
                     self.state = states['penalty_phase']
-                    if self.visualise_game_gui: Visualized_game(cup=self.cup.dice,
-                                                                public_knowledge=self.public_knowledge,
-                                                                know1=self.players[0].knowledge,
-                                                                know2=self.players[1].knowledge,
-                                                                know3=self.players[2].knowledge, turn=self.turn,
-                                                                penal1=self.players[0].penalty_points,
-                                                                penal2=self.players[1].penalty_points,
-                                                                penal3=self.players[2].penalty_points,
-                                                                losername=self.loser_name,
-                                                                current_bid=self.current_bid, text='Bluff!',
-                                                                printtext=self.gui_print)
-
                 else:
-                    if self.print_info: print(
-                        f'Player {self.turn + 1} believes Player {(self.turn + self.n_players - 1) % self.n_players + 1} (i.e. that at least {self.current_bid} is  under the cup)')
-                    self.gui_print += f"\nPlayer {self.turn + 1} believes Player {(self.turn + self.n_players - 1) % self.n_players + 1} (i.e. that at least {self.current_bid} is  under the cup)"
+                    if self.visualize_gui: self.writeInfo(
+                        f'Player {self.turn +1} believes Player {(self.turn + self.n_players - 1) % self.n_players +1} (i.e. that at least {self.current_bid} is  under the cup)')
                     self.players[self.turn].knowledge = self.cup.dice
-                    if self.visualise_game_gui: Visualized_game(cup=self.cup.dice,
-                                                                public_knowledge=self.public_knowledge,
-                                                                know1=self.players[0].knowledge,
-                                                                know2=self.players[1].knowledge,
-                                                                know3=self.players[2].knowledge, turn=self.turn,
-                                                                penal1=self.players[0].penalty_points,
-                                                                penal2=self.players[1].penalty_points,
-                                                                penal3=self.players[2].penalty_points,
-                                                                losername=self.loser_name,
-                                                                current_bid=self.current_bid, text='Believe!',
-                                                                printtext=self.gui_print)
 
                     if is_poker(self.current_bid):
+                        if self.visualize_gui: self.removeOpenDice()
                         self.state = states['poker_phase']
                     else:
+                        if self.visualize_gui: self.removeOpenDice()
                         self.state = states['roll_dice_phase']
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
@@ -993,21 +806,10 @@ class Game:
 
             if self.state == states['roll_dice_phase']:
                 self.roll_dice(self.players[self.turn].roll_strategy)
-                if self.print_info: print(f'Player {self.turn} has rolled the dice, the cup is now as follows:')
-                self.gui_print += f'\nPlayer {self.turn + 1} has rolled the dice, the cup is now: {self.cup.dice}'
-                if self.print_info: print_dice(self.cup.dice)
+                if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has rolled the dice.')
+                if self.visualize_gui: self.drawDice(self.cup.dice)
+                # if self.print_info: print_dice(self.cup.dice)
                 self.update_knowledge()
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
-
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.state = states['bidding_phase']
@@ -1015,22 +817,11 @@ class Game:
 
             if self.state == states['bidding_phase']:
                 self.bidding(self.players[self.turn].bid_strategy)
-                if self.print_info: print(f'Player {self.turn +1} has bid: {self.current_bid}')
-                self.gui_print += f'\nPlayer {self.turn +1} has bid: {self.current_bid}'
-                if self.visualise_game_gui: Visualized_game(cup=self.cup.dice, public_knowledge=self.public_knowledge,
-                                                            know1=self.players[0].knowledge,
-                                                            know2=self.players[1].knowledge,
-                                                            know3=self.players[2].knowledge, turn=self.turn,
-                                                            penal1=self.players[0].penalty_points,
-                                                            penal2=self.players[1].penalty_points,
-                                                            penal3=self.players[2].penalty_points,
-                                                            losername=self.loser_name,
-                                                            current_bid=self.current_bid, text='',
-                                                            printtext=self.gui_print)
+                if self.visualize_gui: self.writeInfo(f'Player {self.turn +1} has bid: {self.current_bid}')
+                if self.visualize_gui and self.turn == 2: self.update_knowledge()
                 if self.press_to_continue:
                     input("Press [Enter] to continue...\n")
                 self.update_turn()
                 self.state = states['believe/call_bluff_phase']
                 continue
-        if self.print_info: print('Game finished!')
-
+        if self.visualize_gui: self.writeInfo('Game finished!')
