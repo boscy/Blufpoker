@@ -9,6 +9,8 @@ Ivar Mak (S2506580)   Oscar de Vries (S2713748)   Joost Warmerdam (S2591367)
 This program has various dependencies. The dependencies can be installed by running the command:
 <br/>```pip3 install -r requirements.txt``` 
 
+Note that Tkinter (for the GUI) is usually pre-installed with Python, otherwise it should be manually installed
+
 Following, the code can be executed with the following command:
 <br/>```python main.py``` 
 
