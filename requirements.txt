@@ -1,5 +1,4 @@
 numpy
 pillow
 matplotlib
-tkinter
 seaborn
