@@ -32,9 +32,9 @@
 					<!-- banner content -->
 					<div class="banner-content">
 						<!-- short paragraph -->
-						<h1>An Epistemic Approach to Analyzing andModeling Knowledge in Blufpoker</h1>
+						<h1>An Epistemic Approach to Analyzing and Modeling Knowledge in Blufpoker</h1>
 						<!-- button link -->
-						<a href="https://github.com/boscy/Blufpoker/" class="btn btn-info btn-lg">Github Page</a>
+						<center><a href="https://github.com/boscy/Blufpoker/" class="btn btn-info btn-lg">Github Page</a></center>
 					</div>
 				</div>
 			</div>
@@ -46,8 +46,26 @@
 						<div class="row">
 							<div class="col">
 								<!-- heading -->
-								<h2>Introduction</h3>
-
+								<h2>Blufpoker</h2>
+									<h4>A  dice  game  containg  interesting  aspects  with  regards  to  knowledge, public announcements and bluffing</h4>
+									<hr>
+									<p>In this report, we implement Blufpoker and simulate agents playing against each other, using different different strategies.  This game is implemented as a Multi-Agent System where agents  interact  and  where  knowledge  about  other  agents  is  relevant  for  decision  making. In  order  to  reason  about  what  an  agent  knows,  a  formalization  of  the  knowledge  is  done  using epistemic  logic.
+									</p>
+									<hr>
+									<center><img src="images/cuppic.jpg" height="450" width="450"></center>
+									<hr>
+									<p>
+										In  the  game,  dice  rolls  are  hidden  to  other  players,  but  unrolled  dice  are  to  berevealed.  Logically, this functions as a public announcement, leading to common knowledge, whichis where the reasoning aspects come into play.  In blufpoker, the aspect of bluffing comes into playwhen a player rolls a bad turn, in which they will have to announce a possible world different fromthe actual world.  Given the knowledge, probabilities of bids can be determined by a knowledge agent.
+									</p>
+									<hr>
+									<p>Every round, players take turns rolling three dice, which are concealed under a cup (i.e. other players do not see the current player's dice). The aim of the game is to roll a number that is higher than the number that was passed on by the previous player, in order to not lose the round. The dice together depict a number in the hundreds. The highest ranking die translates to the hundred, the second to the ten, and the lowest ranking die corresponds to the single digit. For example, in a situation where a 5, 3, and 2 are rolled the corresponding number is 532. The exceptions are the "pokers" which are triplets (i.e. 111, 222, 333, etc). These are the highest possible rolls: 111 is higher than 665, and 666 (pronounced "poker 6") is the highest possible score. Also, whenever a poker is rolled, this is handled differently than the other rolls, where a show-off is initiated where the next player can roll the three dice three times, in order to get a poker of a higher order.
+									</p>
+									<p>	When the round starts, an agent rolls the dice and announces a claim of what number he has rolled. Apart from the first roll, this announcement has to be higher than the previous announcement. Now the next players' turn starts. It is up to this player to determine whether his adversary is telling the truth. If he believes the truth was told, the player rolls the dice to reach a higher number yet again. In the case he does not believe the previous player, he can call the bluff and lift the cup. If the number that was announced is actually on the table player 2 loses the round, if the number is not there; player 1 loses the round. Apart from the first roll, the agent can roll the dice one at a time and decide to not roll remaining dice. The dice that are not rolled, are shown and become common knowledge. Obviously, there is a possibility that he did not reach a number that is high enough. In this case the player needs to bluff, by announcing a number that he did not roll. Since some of the dice are concealed, he can say whatever number he deems suitable, and pass on the dice to the next player. When a player is caught bluffing, that player loses the round and receives one penalty point.
+									</p>
+									<hr>
+									<p>
+									The first player to receive five penalty points loses the game. Therefore there will always be one loser and multiple winners. The number of penalty points chosen to finish can resemble a word such as "HORSE" or "LOSER", receiving a letter for each loss.
+									</p>
 							</div>
 						</div>
 					</div>
@@ -59,8 +77,12 @@
 			<div class="feature">
 				<div class="container">
 					<div class="row">
-						<h2> The Application </h3>
-						<p> Descripition of the simulation </p>
+						<h2> The Application </h2>
+						<h4> can be found <a href="https://github.com/boscy/Blufpoker/">here.</a> </h4>
+						<hr>
+						<center><img src="images/GUIpicca.png"></center>
+						<hr>
+						<p>The central panel provides a game interfacewith depicted dice and players.  The panel on the bottom shows additional game information in theform of a text box and the penalties belonging to the players.  The panel on the right shows thecommon knowledge, and a graphical depiction of the deductions made by the knowledge agent interms of possible worlds and how they relate to the current bid.</p>
 					</div>
 				</div>
 			</div>

@@ -19,21 +19,24 @@ body{
 h1,h2,h3,h4,h5,h6{
 	font-family: "Raleway", Arial, Helvetica, sans-serif;
 	font-weight: 600;
+	text-align: center;
 }
 
 h1{
 	color: #d7e6e3;
+	text-shadow: 2px 2px #000000;
 }
 
 p{
 	margin:0;
 	padding:0;
 	line-height: 24px;
-	font-size: 14px;
+	font-size: 20px;
 }
 
 a{
 	text-decoration: none;
+	text-align:center;
 }
 
 a:hover{
@@ -69,7 +72,7 @@ hr{
 
 .banner {
 	border-top: 8px solid #32c8de;
-	background: #fff url('../images/cuppicBanner.jpg') repeat-x center center;
+	background: #fff url('../images/6dicegame.jpg') repeat-x center center;
 }
 
 .banner .container {
@@ -77,7 +80,7 @@ hr{
 }
 
 .banner .banner-content {
-	padding: 150px 0;
+	padding: 100px 0;
 }
 
 .banner .banner-content p {
