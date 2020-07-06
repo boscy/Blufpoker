@@ -745,10 +745,10 @@ class Game:
             if self.print_info: print(
                 f'Player {i + 1} knowledge (Number of possible worlds = {len(self.players[i].knowledge)}): {self.players[i].knowledge} \n')
 
+
     ####################################################################################################################################################
     ################################################          MAIN LOOP THAT LOOPS OVER GAME STATES             ########################################
     ####################################################################################################################################################
-
     # Main loop that plays the game and keeps track of the states. Above functions handle the deeper game aspects
     def play(self):
 
